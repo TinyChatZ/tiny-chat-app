@@ -12,10 +12,9 @@ import {
 import VueMarkdown from 'vue-markdown-render'
 import { ref, VNodeRef, computed } from 'vue'
 import { getEventSource } from '../utils/EventSource'
-
-import hljs from 'highlight.js'
 import { useChatgptStore } from '@renderer/stores/ChatgptStore'
 import { useSettingStore } from '@renderer/stores/SettingStore'
+import MarkdownRender from '@renderer/components/MarkdownRender.vue'
 import { mapWritableState } from 'pinia'
 
 // 获取消息打印的实例
@@ -36,28 +35,6 @@ const loading = ref(false)
 const data = computed(() => ({ ...mapWritableState(useChatgptStore, ['chatList']) }))
 // 聊天记录scrollbar
 const scrollbar = ref<VNodeRef>('')
-
-// markdown配置
-const markdownConfig = ref({
-  html: false,
-  typographer: false,
-  highlight: (str, lang) => {
-    // 允许高亮的情况下
-    if (lang && hljs.getLanguage(lang)) {
-      try {
-        return (
-          '<pre class="hljs"><code class="p-3 h-full overflow-x-auto block code_scrollbar">' +
-          hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
-          '</code></pre>'
-        )
-      } catch (__) {
-        console.error(__)
-      }
-    }
-
-    return '<code class="p-3 h-full overflow-x-auto block code_scrollbar">' + str + '</code>'
-  }
-})
 
 // 发送事件
 const sendData = async (): Promise<void> => {
@@ -86,6 +63,7 @@ const sendData = async (): Promise<void> => {
     options,
     // 渲染结果
     (res) => {
+      // console.log(chatgptStore.chatList[chatgptStore.getRealIndex(position)].content)
       if (typeof res.data !== 'string') {
         if (res.data?.choices[0].delta?.role) {
           chatgptStore.chatList[chatgptStore.getRealIndex(position)].role =
@@ -126,7 +104,8 @@ const refresh = (): void => {
               <template v-if="item.role == 'user'">
                 <div class="col-span-2"></div>
                 <div class="col-span-8 break-all">
-                  <vue-markdown :source="item.content" :options="markdownConfig" />
+                  <markdown-render :source="item.content" />
+                  <!-- <vue-markdown :source="item.content" :options="markdownConfig" /> -->
                 </div>
                 <div class="col-span-2">
                   <div>
@@ -149,7 +128,7 @@ const refresh = (): void => {
                   <img src="@renderer/assets/icons/chat-assistant-icon.svg" />
                 </div>
                 <div class="col-span-8 break-all">
-                  <vue-markdown :source="item.content" :options="markdownConfig" />
+                  <vue-markdown :source="item.content" />
                 </div>
                 <div class="col-span-2"></div>
               </template>
@@ -181,28 +160,4 @@ const refresh = (): void => {
   <!-- 输入token的对话框 -->
 </template>
 
-<style>
-.code_scrollbar::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-  /**/
-}
-
-.code_scrollbar::-webkit-scrollbar-track {
-  background: rgb(239, 239, 239);
-  border-radius: 2px;
-}
-
-.code_scrollbar::-webkit-scrollbar-thumb {
-  background: #bfbfbf;
-  border-radius: 10px;
-}
-
-.code_scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #333;
-}
-
-.code_scrollbar::-webkit-scrollbar-corner {
-  background: #179a16;
-}
-</style>
+<style></style>
