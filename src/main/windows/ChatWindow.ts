@@ -4,7 +4,7 @@ import { is } from '@electron-toolkit/utils'
 import icon from '../../../resources/iconNew.ico?asset'
 import url from 'node:url'
 import { AbstractWindow } from './AbstractWindow'
-import SetService from '../services/SetService'
+import * as SetService from '../services/SetService'
 
 export class ChatWindow extends AbstractWindow {
   createWindow(): BrowserWindow {

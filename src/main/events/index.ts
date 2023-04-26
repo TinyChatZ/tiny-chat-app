@@ -1,10 +1,9 @@
 import { BrowserWindow, app, ipcMain } from 'electron'
 import { versions, env } from 'process'
 import * as os from 'os'
-import chatgpt from '../services/SetService'
 import { SetWindow } from '../windows/SetWindow'
 import { SettingType } from '../types/SettingType'
-import SetService from '../services/SetService'
+import * as SetService from '../services/SetService'
 import { WindowsManageUtils } from '../utils/WindowManageUtils'
 export default function registerEvent(): void {
   // Public
@@ -19,16 +18,16 @@ export default function registerEvent(): void {
   /**
    * 加载主进程中的配置
    */
-  ipcMain.handle('chatgpt:getSettingParams', chatgpt.getSettingParams)
+  ipcMain.handle('chatgpt:getSettingParams', SetService.getSettingParams)
 
   /**
    * 保存设置信息，并且广播更新内容
    *
    */
   ipcMain.handle('chatgpt:setSettingParams', async (_event: unknown, data: SettingType) => {
-    const res = await chatgpt.setSettingParams(_event, data)
+    const res = await SetService.setSettingParams(_event, data)
     // 修改设置后广播刷新
-    chatgpt.broadcastSettingUpdate()
+    SetService.broadcastSettingUpdate()
     return res
   })
 
