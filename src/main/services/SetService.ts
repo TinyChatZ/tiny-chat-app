@@ -3,52 +3,15 @@ import path from 'path'
 import fs from 'fs/promises'
 import 'highlight.js'
 import { RpcUtils, RpcResult } from '../utils/RpcUtils'
-import { SettingType } from '../types/SettingType'
 import { WindowsManageUtils } from '../utils/WindowManageUtils'
 import { SetWindow } from '../windows/SetWindow'
 import * as _ from 'loadsh'
 import * as os from 'node:os'
+import { type SettingType, getDefaultSetting } from '@shared/config/SettingType'
 /**
  * 缓存
  */
 let settingCache: SettingType | undefined
-
-/**
- * 空的设置信息，初始化用
- */
-const settingEmpty: SettingType = {
-  chatgpt: {
-    token: '',
-    proxy: {
-      address: '',
-      param: ''
-    }
-  },
-  general: {
-    dispalyMode: 'light',
-    windowTop: false,
-    saveWindowPosition: false,
-    windowSize: {
-      width: 400,
-      height: 650
-    },
-    windowPosition: {},
-    fontFamily: '',
-    fontSize: 18
-  },
-  shortcuts: {
-    send: '',
-    refresh: '',
-    minimize: '',
-    windowTop: '',
-    doFixedWindowPosition: '',
-    undoFixedWindowPosition: ''
-  },
-  other: {
-    devMode: false
-  }
-}
-
 /**
  * 获取设置信息
  * @returns 设置信息
@@ -61,19 +24,19 @@ export const getSettingParams = async (): Promise<RpcResult<SettingType>> => {
     } catch (e) {
       // 写入失败时，给出错误
       return fs
-        .writeFile(getConfigPath(), JSON.stringify(settingEmpty))
-        .then(() => RpcUtils.success(settingEmpty))
+        .writeFile(getConfigPath(), JSON.stringify(getDefaultSetting()))
+        .then(() => RpcUtils.success(getDefaultSetting()))
         .catch(() => RpcUtils.error('can not write file'))
     }
   }
-  return Promise.resolve(RpcUtils.success(settingCache ?? settingEmpty))
+  return Promise.resolve(RpcUtils.success(settingCache ?? getDefaultSetting()))
 }
 
 /**
  * 永远获取缓存的设置信息
  * @returns 设置信息
  */
-export const getCacheSettingParams = (): SettingType => settingCache ?? settingEmpty
+export const getCacheSettingParams = (): SettingType => settingCache ?? getDefaultSetting()
 
 /**
  * 更新设置信息
@@ -96,7 +59,7 @@ export const setSettingParams = async (
     settingCache = data
     return Promise.resolve(RpcUtils.success(data))
   } else {
-    settingCache = settingEmpty
+    settingCache = getDefaultSetting()
     return Promise.resolve(RpcUtils.error(''))
   }
 }
@@ -139,5 +102,5 @@ const loadSettingFileToCache = async (): Promise<void> => {
   const data = await fs.readFile(getConfigPath())
   // 原数数据
   const originalData = JSON.parse(data.toString())
-  settingCache = _.merge(settingEmpty, originalData)
+  settingCache = _.merge(getDefaultSetting(), originalData)
 }

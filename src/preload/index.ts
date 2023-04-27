@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import { RpcResult } from '../main/utils/RpcUtils'
-import { type SettingType } from '../main/types/SettingType'
+import { type SettingType } from '@shared/config/SettingType'
 
 // Custom APIs for renderer
 const api = {

@@ -53,7 +53,6 @@ interface SettingOtherType {
   devMode: boolean
 }
 
-
 interface SettingType {
   /** ChatGPT配置 */
   chatgpt: SettingChatgptType
@@ -65,4 +64,41 @@ interface SettingType {
   other: SettingOtherType
 }
 
-export { type SettingType }
+/**
+ * 初始的配置信息
+ * 注意这个应该是不可变的所以变成了一个方法
+ */
+const getDefaultSetting = (): SettingType => ({
+  chatgpt: {
+    token: '',
+    proxy: {
+      address: '',
+      param: ''
+    }
+  },
+  general: {
+    dispalyMode: 'light',
+    windowTop: false,
+    saveWindowPosition: false,
+    windowSize: {
+      width: 400,
+      height: 650
+    },
+    windowPosition: {},
+    fontFamily: '',
+    fontSize: 18
+  },
+  shortcuts: {
+    send: '',
+    refresh: '',
+    minimize: '',
+    windowTop: '',
+    doFixedWindowPosition: '',
+    undoFixedWindowPosition: ''
+  },
+  other: {
+    devMode: false
+  }
+})
+
+export { type SettingType, getDefaultSetting }

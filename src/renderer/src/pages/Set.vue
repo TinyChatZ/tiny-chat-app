@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SettingStoreState, useSettingStore } from '@renderer/stores/SettingStore'
+import { useSettingStore } from '@renderer/stores/SettingStore'
 import {
   NCard,
   NAnchor,
@@ -15,24 +15,30 @@ import {
   NButton,
   NScrollbar,
   NPopconfirm,
+  NCollapseTransition,
   NSpin,
   useMessage
 } from 'naive-ui'
 import { ref, onMounted, watch } from 'vue'
 import MessageDialog from '@renderer/components/MessageDialog.vue'
+import { SettingType, getDefaultSetting } from '@shared/config/SettingType'
 
 const settingStore = useSettingStore()
 const message = useMessage()
 // 表单数据
-const formValue = ref<SettingStoreState>(settingStore.cloneNewSetting())
+const formValue = ref<SettingType>(settingStore.cloneNewSetting())
+// 系统信息
 const sysInfo = ref<Map<string, string>>(new Map<string, string>())
 // 加载图标
 const loading = ref(true)
+// 是否显示代理
+const showProxy = ref(false)
 onMounted(async () => {
   const res = await settingStore.initSettingParams()
   if (!res.success) message.error('无法加载配置')
   formValue.value = settingStore.cloneNewSetting()
-
+  showProxy.value =
+    formValue.value.chatgpt.proxy && formValue.value.chatgpt.proxy.address ? true : false
   sysInfo.value = await window.api.getSysInfo()
   loading.value = false
 })
@@ -50,15 +56,12 @@ watch(
 // 重置本地配置
 async function handleResetSetState(): Promise<void> {
   settingStore.resetInitSetting()
-  await settingStore.setSettingParams(settingStore.cloneNewSetting())
   formValue.value = settingStore.cloneNewSetting()
 }
 
 // 恢复成默认设置
 async function handleResetEmptySet(): Promise<void> {
-  settingStore.$reset()
-  await settingStore.setSettingParams(settingStore.cloneNewSetting())
-  formValue.value = settingStore.cloneNewSetting()
+  formValue.value = getDefaultSetting()
 }
 
 // 唤起开发者界面
@@ -134,12 +137,14 @@ function gotoHash(id: string): void {
                       <span class="col-span-1">宽度:</span>
                       <n-input-number
                         v-model:value="formValue.general.windowSize.width"
+                        placeholder="窗口长度"
                         class="col-span-5"
                         :show-button="false"
                       />
                       <span class="col-span-1">高度:</span>
                       <n-input-number
                         v-model:value="formValue.general.windowSize.height"
+                        placeholder="窗口高度"
                         class="col-span-5"
                         :show-button="false"
                       />
@@ -165,14 +170,25 @@ function gotoHash(id: string): void {
               <n-card id="chatgpt" title="ChatGPT">
                 <n-form>
                   <n-form-item label="OpenAI Token"
-                    ><n-input v-model:value="formValue.chatgpt.token"
+                    ><n-input
+                      v-model:value="formValue.chatgpt.token"
+                      placeholder="这是OpenAI官网中生成的token"
                   /></n-form-item>
-                  <n-form-item label="TokenServer 地址"
-                    ><n-input v-model:value="formValue.chatgpt.proxy.address"
-                  /></n-form-item>
-                  <n-form-item label="TokenServer Token"
-                    ><n-input v-model:value="formValue.chatgpt.proxy.param"
-                  /></n-form-item>
+                  <n-form-item label="代理:是否使用代理模式">
+                    <n-switch v-model:value="showProxy" />
+                  </n-form-item>
+                  <n-collapse-transition :show="showProxy">
+                    <n-form-item label="代理地址"
+                      ><n-input
+                        v-model:value="formValue.chatgpt.proxy.address"
+                        placeholder="请输入代理地址"
+                    /></n-form-item>
+                    <n-form-item label="代理Token"
+                      ><n-input
+                        v-model:value="formValue.chatgpt.proxy.param"
+                        placeholder="请输入代理token"
+                    /></n-form-item>
+                  </n-collapse-transition>
                 </n-form>
               </n-card>
               <!-- 快捷键卡片 -->
