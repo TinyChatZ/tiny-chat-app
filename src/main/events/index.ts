@@ -2,7 +2,7 @@ import { BrowserWindow, app, ipcMain } from 'electron'
 import { versions, env } from 'process'
 import * as os from 'os'
 import { SetWindow } from '../windows/SetWindow'
-import { SettingType } from '../types/SettingType'
+import { SettingType } from '@shared/config/SettingType'
 import * as SetService from '../services/SetService'
 import { WindowsManageUtils } from '../utils/WindowManageUtils'
 export default function registerEvent(): void {

@@ -9,12 +9,11 @@ import {
   NButton,
   NButtonGroup
 } from 'naive-ui'
-import VueMarkdown from 'vue-markdown-render'
 import { ref, VNodeRef, computed } from 'vue'
 import { getEventSource } from '../utils/EventSource'
 import { useChatgptStore } from '@renderer/stores/ChatgptStore'
 import { useSettingStore } from '@renderer/stores/SettingStore'
-import MarkdownRender from '@renderer/components/MarkdownRender.vue'
+import MarkdownRender from '@renderer/components/markdown/MarkdownRender.vue'
 import { mapWritableState } from 'pinia'
 
 // 获取消息打印的实例
@@ -77,7 +76,10 @@ const sendData = async (): Promise<void> => {
       }
     }
   )
-    .then(() => (loading.value = false))
+    .then(() => {
+      loading.value = false
+      // console.log(chatgptStore.chatList[chatgptStore.getRealIndex(position)])
+    })
     .catch(() => {
       message.error('调用失败，请检查网络或token')
       chatgptStore.dropChatListItem(position)
@@ -128,7 +130,7 @@ const refresh = (): void => {
                   <img src="@renderer/assets/icons/chat-assistant-icon.svg" />
                 </div>
                 <div class="col-span-8 break-all">
-                  <vue-markdown :source="item.content" />
+                  <markdown-render :source="item.content" />
                 </div>
                 <div class="col-span-2"></div>
               </template>
