@@ -13,7 +13,7 @@
 ## 技术清单
 
 - [electron](https://www.electronjs.org/): 创建桌面客户端环境
-- [electron-vite](https://cn-evite.netlify.app/): electron下的打包工具，作者人很不错，对于哪怕基础的问题也愿意耐心解答
+- [electron-vite](https://cn-evite.netlify.app/): electron下的打包工具，作者人很不错
 - [vue.js](https://cn.vuejs.org/): vue.js
 - [highlight.js](https://highlightjs.org/): 代码端高亮样式
 - [vue-markdown-render](https://www.npmjs.com/package/vue-markdown-render): vue中的markdown渲染
