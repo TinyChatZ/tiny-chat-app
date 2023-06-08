@@ -26,6 +26,15 @@ export default defineConfig({
         '@shared': resolve('src/shared')
       }
     },
-    plugins: [vue()]
+    plugins: [
+      vue({
+        template: {
+          compilerOptions: {
+            // 将所有带短横线的标签名都视为自定义元素
+            isCustomElement: (tag) => tag.startsWith('web-component')
+          }
+        }
+      })
+    ]
   }
 })

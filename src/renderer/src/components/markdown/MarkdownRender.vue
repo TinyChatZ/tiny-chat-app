@@ -47,15 +47,20 @@ mdRender.value.renderer.rules.code_block = (tokens, idx, _options, _env, slf): s
 function buildCodeBlock(str: string, lang?: string, other?: string): string {
   if (lang && hljs.getLanguage(lang)) {
     return (
-      `<pre style="margin auto;" ${other} class="hljs">` +
-      `<code class="p-3 h-full overflow-x-auto block code_scrollbar code_public_style">${
+      `<pre style="margin auto;" ${other} class="hljs code_public_style">` +
+      `<div><web-component-code-tool-bar copy-data="${str}" /></div>` +
+      `<code class="p-3 h-full overflow-x-auto block code_scrollbar">${
         hljs.highlight(str, { language: lang, ignoreIllegals: true }).value
       }</code></pre>`
     )
   } else {
-    return `<pre class="hljs"><code class="p-3 h-full overflow-x-auto block code_scrollbar code_public_style">
-    ${hljs.highlightAuto(str).value}
-    </code></pre>`
+    return (
+      `<pre style="margin auto;" class="hljs code_public_style">` +
+      `<div><web-component-code-tool-bar copy-data="${str}" /></div>` +
+      `<code class="p-3 h-full overflow-x-auto block code_scrollbar">` +
+      `${hljs.highlightAuto(str).value}` +
+      `</code></pre>`
+    )
   }
 }
 </script>
@@ -65,7 +70,7 @@ function buildCodeBlock(str: string, lang?: string, other?: string): string {
   <div v-html="content"></div>
 </template>
 
-<style lang="less">
+<style  lang="less">
 .copy-btn {
   top: 2px;
   right: 4px;
