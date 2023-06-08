@@ -32,6 +32,7 @@ const loading = ref(false)
 // 聊天记录数据
 // const data: Ref<Array<{ role?: string; content?: string; date?: Date }>> = ref([])
 const data = computed(() => ({ ...mapWritableState(useChatgptStore, ['chatList']) }))
+
 // 聊天记录scrollbar
 const scrollbar = ref<VNodeRef>('')
 
@@ -62,7 +63,7 @@ const sendData = async (): Promise<void> => {
     options,
     // 渲染结果
     (res) => {
-      // console.log(chatgptStore.chatList[chatgptStore.getRealIndex(position)].content)
+      console.log(chatgptStore.chatList[chatgptStore.getRealIndex(position)].content)
       if (typeof res.data !== 'string') {
         if (res.data?.choices[0].delta?.role) {
           chatgptStore.chatList[chatgptStore.getRealIndex(position)].role =
@@ -104,24 +105,22 @@ const refresh = (): void => {
           <n-list-item v-for="item in data.chatList.get()" :key="item.date?.toString()">
             <div class="grid grid-cols-12">
               <template v-if="item.role == 'user'">
-                <div class="col-span-2"></div>
-                <div class="col-span-8 break-all">
-                  <markdown-render :source="item.content" />
-                  <!-- <vue-markdown :source="item.content" :options="markdownConfig" /> -->
-                </div>
                 <div class="col-span-2">
                   <div>
                     <img src="@renderer/assets/icons/chat-user-icon.svg" />
                   </div>
                 </div>
+                <div class="col-span-10 break-all">
+                  <markdown-render :source="item.content" />
+                  <!-- <vue-markdown :source="item.content" :options="markdownConfig" /> -->
+                </div>
               </template>
 
               <template v-if="item.role == 'system'">
                 <div class="col-span-2"></div>
-                <div class="col-span-8 break-all text-center" style="color: grey">
+                <div class="col-span-10 break-all text-center" style="color: grey">
                   {{ item.content }}
                 </div>
-                <div class="col-span-2"></div>
               </template>
 
               <template v-if="item.role == 'assistant'">
@@ -129,10 +128,9 @@ const refresh = (): void => {
                   <!-- 该图像来源于OpenAI官网 -->
                   <img src="@renderer/assets/icons/chat-assistant-icon.svg" />
                 </div>
-                <div class="col-span-8 break-all">
+                <div class="col-span-10 break-all">
                   <markdown-render :source="item.content" />
                 </div>
-                <div class="col-span-2"></div>
               </template>
             </div>
           </n-list-item>
