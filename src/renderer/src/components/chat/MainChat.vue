@@ -10,10 +10,10 @@ import {
   NButtonGroup
 } from 'naive-ui'
 import { ref, VNodeRef, computed } from 'vue'
-import { getEventSource } from '../utils/EventSource'
+import { getEventSource } from '@renderer/utils/EventSource'
 import { useChatgptStore } from '@renderer/stores/ChatgptStore'
 import { useSettingStore } from '@renderer/stores/SettingStore'
-import MarkdownRender from '@renderer/components/markdown/MarkdownRender.vue'
+import MainChatItem from './MainChatItem.vue'
 import { mapWritableState } from 'pinia'
 
 // 获取消息打印的实例
@@ -63,7 +63,6 @@ const sendData = async (): Promise<void> => {
     options,
     // 渲染结果
     (res) => {
-      console.log(chatgptStore.chatList[chatgptStore.getRealIndex(position)].content)
       if (typeof res.data !== 'string') {
         if (res.data?.choices[0].delta?.role) {
           chatgptStore.chatList[chatgptStore.getRealIndex(position)].role =
@@ -103,36 +102,7 @@ const refresh = (): void => {
         <n-list hoverable clickable>
           <!-- 聊天记录list -->
           <n-list-item v-for="item in data.chatList.get()" :key="item.date?.toString()">
-            <div class="grid grid-cols-12">
-              <template v-if="item.role == 'user'">
-                <div class="col-span-2">
-                  <div>
-                    <img src="@renderer/assets/icons/chat-user-icon.svg" />
-                  </div>
-                </div>
-                <div class="col-span-10 break-all">
-                  <markdown-render :source="item.content" />
-                  <!-- <vue-markdown :source="item.content" :options="markdownConfig" /> -->
-                </div>
-              </template>
-
-              <template v-if="item.role == 'system'">
-                <div class="col-span-2"></div>
-                <div class="col-span-10 break-all text-center" style="color: grey">
-                  {{ item.content }}
-                </div>
-              </template>
-
-              <template v-if="item.role == 'assistant'">
-                <div class="col-span-2">
-                  <!-- 该图像来源于OpenAI官网 -->
-                  <img src="@renderer/assets/icons/chat-assistant-icon.svg" />
-                </div>
-                <div class="col-span-10 break-all">
-                  <markdown-render :source="item.content" />
-                </div>
-              </template>
-            </div>
+            <MainChatItem :item="item" />
           </n-list-item>
         </n-list>
       </n-scrollbar>
