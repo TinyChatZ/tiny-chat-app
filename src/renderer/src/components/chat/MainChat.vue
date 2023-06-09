@@ -56,7 +56,7 @@ const sendData = async (): Promise<void> => {
   }
   const { url, options } = chatgptStore.getRequestParam
   // 设置返回值
-  const position = chatgptStore.createChatListItem('')
+  const position = chatgptStore.createChatListItem('assistant')
   // 发起EventSource调用
   getEventSource<{ choices: Array<{ delta: { role?: string; content?: string } }> }>(
     url,

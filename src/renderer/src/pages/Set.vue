@@ -118,12 +118,11 @@ function gotoHash(id: string): void {
               <!-- 通用卡片 -->
               <n-card id="general" title="通用（General)">
                 <n-form>
-                  <!-- todo 尚未实现 -->
-                  <n-form-item v-show="false" label="显示模式">
-                    <n-radio-group v-model:value="formValue.general.dispalyMode" disabled>
-                      <n-radio-button key="light" value="明亮">明亮</n-radio-button>
-                      <n-radio-button key="dark" value="黑暗">黑暗</n-radio-button>
-                      <n-radio-button key="auto" value="跟随系统">跟随系统</n-radio-button>
+                  <n-form-item label="显示模式">
+                    <n-radio-group v-model:value="formValue.general.dispalyMode">
+                      <n-radio-button key="light" value="light">明亮</n-radio-button>
+                      <n-radio-button key="dark" value="dark">黑暗</n-radio-button>
+                      <n-radio-button key="auto" value="auto">跟随系统</n-radio-button>
                     </n-radio-group>
                   </n-form-item>
                   <n-form-item label="窗口置顶"
