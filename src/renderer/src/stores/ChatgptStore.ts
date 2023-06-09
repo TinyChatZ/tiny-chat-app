@@ -9,6 +9,7 @@ export interface ChatItem {
   content: string
   date: Date
   ticks?: number
+  position: number
 }
 /**
  * ChatgptStoreState类型
@@ -54,8 +55,11 @@ export const useChatgptStore = defineStore('chatgpt', {
      * @param message 用户会话消息
      */
     createUserInfo(message: string): number {
-      const index = this.chatList.push({ role: 'user', content: message, date: new Date() }) - 1
-      return createPositionKey(index)
+      const index =
+        this.chatList.push({ role: 'user', content: message, date: new Date(), position: -1 }) - 1
+      const position = createPositionKey(index)
+      this.chatList[index].position = position
+      return position
     },
     /**
      * 在现有基础末尾添加聊天列表
@@ -67,9 +71,12 @@ export const useChatgptStore = defineStore('chatgpt', {
           role: role,
           content: content ?? '',
           date: date ?? new Date(),
-          ticks: ticks
+          ticks: ticks,
+          position: -1
         }) - 1
-      return createPositionKey(index)
+      const position = createPositionKey(index)
+      this.chatList[index].position = position
+      return position
     },
     /**
      * 修改聊天记录
@@ -99,7 +106,7 @@ export const useChatgptStore = defineStore('chatgpt', {
      */
     dropChatListItem(position: number): void {
       const index = innerPositionMap.get(position)
-      if (!index) throw new Error('invalid position')
+      if (!index && index != 0) throw new Error('invalid position')
       this.chatList.splice(index, 1)
       innerPositionMap.forEach((value, key) => {
         if (value > index) innerPositionMap.set(key, value - 1)
