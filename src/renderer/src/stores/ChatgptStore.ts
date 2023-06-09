@@ -2,15 +2,19 @@ import { EventSourceOptions } from '@renderer/utils/EventSource'
 import { defineStore } from 'pinia'
 import { useSettingStore } from './SettingStore'
 /**
+ * 对话Item
+ */
+export interface ChatItem {
+  role: string
+  content: string
+  date: Date
+  ticks?: number
+}
+/**
  * ChatgptStoreState类型
  */
-interface ChatgptStoreState {
-  chatList: Array<{
-    role: string
-    content: string
-    date: Date
-    ticks?: number
-  }>
+export interface ChatgptStoreState {
+  chatList: Array<ChatItem>
   curQuestion: string
 }
 export const useChatgptStore = defineStore('chatgpt', {

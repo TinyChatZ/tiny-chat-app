@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { NButton, NCollapseTransition } from 'naive-ui'
 import { ref } from 'vue'
-import MainChat from '@renderer/components/MainChat.vue'
+import MainChat from '@renderer/components/chat/MainChat.vue'
 import Setting from '@renderer/components/Setting.vue'
 const showState = ref(true)
 const showDialog = (): void => {

@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 const copyText = ref('copy')
 const props = defineProps({
   copyData: String
 })
+const copyData = computed(() => decodeURIComponent(props.copyData ?? ''))
 function copy(): void {
-  navigator.clipboard.writeText(props.copyData ?? '').then(() => {
-    console.log(props.copyData)
+  navigator.clipboard.writeText(copyData.value).then(() => {
     copyText.value = '✔️'
     setTimeout(() => (copyText.value = 'copy'), 2000)
   })
