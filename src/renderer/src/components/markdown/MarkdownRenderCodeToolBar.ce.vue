@@ -26,7 +26,6 @@ function copy(): void {
 }
 .copy {
   background-color: transparent;
-
   border: none;
   padding: 2;
   text-align: center;
@@ -37,5 +36,22 @@ function copy(): void {
 .copy:hover {
   box-shadow: -1px -1px 0px 0px #dbdbdbab; /* 添加灰色的阴影 */
   background-color: #dbdbdbab;
+}
+
+@media (prefers-color-scheme: dark) {
+  .copy {
+    background-color: transparent;
+    border: none;
+    padding: 2;
+    text-align: center;
+    cursor: pointer;
+    color: #d6d6d6;
+    counter-reset: #d6d6d6;
+  }
+
+  .copy:hover {
+    box-shadow: -1px -1px 0px 0px #dbdbdbab; /* 添加灰色的阴影 */
+    background-color: #333;
+  }
 }
 </style>

@@ -12,6 +12,19 @@ const useSettingStore = defineStore('setting', {
       return {
         Authorization: this.chatgpt?.token || ''
       }
+    },
+    /**
+     * 获取当前的显示模式，如果配置为system则是经过计算的
+     * @returns light，dark
+     */
+    getDisplayMode(): 'light' | 'dark' {
+      if (this.general.displayMode !== 'system') return this.general.displayMode
+
+      if (window.matchMedia('(prefers-color-scheme: dark)')) {
+        return 'dark'
+      } else {
+        return 'light'
+      }
     }
   },
   actions: {

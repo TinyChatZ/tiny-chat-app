@@ -1,8 +1,8 @@
 Arguments: 
-  C:\Users\F211858\scoop\apps\nvm\current\nodejs\nodejs\node.exe C:\Users\F211858\scoop\apps\nvm\current\nodejs\nodejs\node_modules\yarn\bin\yarn.js add electron-history
+  C:\Users\F211858\scoop\apps\nvm\current\nodejs\nodejs\node.exe C:\Users\F211858\scoop\apps\nvm\current\nodejs\nodejs\node_modules\yarn\bin\yarn.js
 
 PATH: 
-  C:\SYBASE\DLL;C:\WINDOWS\SYSTEM32;C:\WINDOWS;C:\WINDOWS\SYSTEM32\WBEM;C:\WINDOWS\SYSTEM32\WINDOWSPOWERSHELL\V1.0\;C:\WINDOWS\SYSTEM32\OPENSSH\;C:\USERS\ADMINISTRATOR\APPDATA\LOCAL\MICROSOFT\WINDOWSAPPS;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\dotnet\;C:\Users\F211858\scoop\apps\python\current\Scripts;C:\Users\F211858\scoop\apps\python\current;C:\Users\F211858\scoop\apps\graalvm-jdk17\current\bin;C:\Users\F211858\scoop\apps\maven\current\bin;C:\Users\F211858\scoop\apps\nvm\current\nodejs\nodejs;C:\Users\F211858\scoop\shims;C:\Users\F211858\AppData\Local\Microsoft\WindowsApps;C:\Users\F211858\AppData\Local\JetBrains\Toolbox\scripts;C:\Users\F211858\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\F211858\AppData\Local\Programs\oh-my-posh\bin;C:\Users\F211858\.dotnet\tools;C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.35.32215\bin\Hostx64\x64;C:\Users\F211858\AppData\Local\GitHubDesktop\bin;C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python39_64
+  C:\Program Files\Python38\Scripts\;C:\Program Files\Python38\;C:\SYBASE\DLL;C:\WINDOWS\SYSTEM32;C:\WINDOWS;C:\WINDOWS\SYSTEM32\WBEM;C:\WINDOWS\SYSTEM32\WINDOWSPOWERSHELL\V1.0\;C:\WINDOWS\SYSTEM32\OPENSSH\;C:\USERS\ADMINISTRATOR\APPDATA\LOCAL\MICROSOFT\WINDOWSAPPS;C:\Program Files\dotnet\;C:\Program Files\Docker\Docker\resources\bin;C:\Users\F211858\AppData\Local\Programs\Python\Python38\Scripts\;C:\Users\F211858\AppData\Local\Programs\Python\Python38\;C:\Users\F211858\scoop\apps\graalvm-jdk17\current\bin;C:\Users\F211858\scoop\apps\maven\current\bin;C:\Users\F211858\scoop\apps\nvm\current\nodejs\nodejs;C:\Users\F211858\scoop\shims;C:\Users\F211858\AppData\Local\Microsoft\WindowsApps;C:\Users\F211858\AppData\Local\JetBrains\Toolbox\scripts;C:\Users\F211858\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\F211858\AppData\Local\Programs\oh-my-posh\bin;C:\Users\F211858\.dotnet\tools;C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.35.32215\bin\Hostx64\x64;C:\Users\F211858\AppData\Local\GitHubDesktop\bin;C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python39_64
 
 Yarn version: 
   1.22.19
@@ -14,17 +14,7 @@ Platform:
   win32 x64
 
 Trace: 
-  Error: https://registry.yarnpkg.com/electron-history: Not found
-      at params.callback [as _callback] (C:\Users\F211858\scoop\persist\nvm\nodejs\v18.16.0\node_modules\yarn\lib\cli.js:66145:18)
-      at self.callback (C:\Users\F211858\scoop\persist\nvm\nodejs\v18.16.0\node_modules\yarn\lib\cli.js:140890:22)
-      at Request.emit (node:events:513:28)
-      at Request.<anonymous> (C:\Users\F211858\scoop\persist\nvm\nodejs\v18.16.0\node_modules\yarn\lib\cli.js:141862:10)
-      at Request.emit (node:events:513:28)
-      at IncomingMessage.<anonymous> (C:\Users\F211858\scoop\persist\nvm\nodejs\v18.16.0\node_modules\yarn\lib\cli.js:141784:12)
-      at Object.onceWrapper (node:events:627:28)
-      at IncomingMessage.emit (node:events:525:35)
-      at endReadableNT (node:internal/streams/readable:1359:12)
-      at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+  Error: EPERM: operation not permitted, unlink 'D:\Syncthing\GitHub\TinyGPT\app\node_modules\electron\dist\electron.exe'
 
 npm manifest: 
   {
@@ -52,6 +42,7 @@ npm manifest:
       "@electron-toolkit/preload": "^1.0.3",
       "@electron-toolkit/utils": "^1.0.2",
       "highlight.js": "^11.7.0",
+      "loadsh": "^0.0.4",
       "pinia": "^2.0.33",
       "vue-markdown-render": "^2.0.1",
       "vue-router": "4"
@@ -2703,6 +2694,11 @@ Lockfile:
     integrity sha512-ynTsyrFSdE5oZ/O9GEf00kPngmOfVwazR5GKDq6EYfhlpFug3J2zybX56a2PRRpc9P+FuSoGNAwjlbDs9jJBPQ==
     dependencies:
       uc.micro "^1.0.1"
+  
+  loadsh@^0.0.4:
+    version "0.0.4"
+    resolved "https://registry.yarnpkg.com/loadsh/-/loadsh-0.0.4.tgz#5314babd12bb13315dde024a4ca70758c5489d2d"
+    integrity sha512-U+wLL8InpfRalWrr+0SuhWgGt10M4OyAk6G8xCYo2rwpiHtxZkWiFpjei0vO463ghW8LPCdhqQxXlMy2qicAEw==
   
   locate-path@^6.0.0:
     version "6.0.0"

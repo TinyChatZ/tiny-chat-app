@@ -5,6 +5,7 @@ import { SetWindow } from '../windows/SetWindow'
 import { SettingType } from '@shared/config/SettingType'
 import * as SetService from '../services/SetService'
 import { WindowsManageUtils } from '../utils/WindowManageUtils'
+import * as fontList from 'font-list'
 export default function registerEvent(): void {
   // Public
 
@@ -25,6 +26,8 @@ export default function registerEvent(): void {
    *
    */
   ipcMain.handle('chatgpt:setSettingParams', async (_event: unknown, data: SettingType) => {
+    // 钩子更新前执行操作
+    await SetService.beforeSetSettingParams(data, SetService.getCacheSettingParams())
     const res = await SetService.setSettingParams(_event, data)
     // 修改设置后广播刷新
     SetService.broadcastSettingUpdate()
@@ -71,5 +74,12 @@ export default function registerEvent(): void {
     res.set('systemVersion', `${os.version} ${os.release()}`)
     if (env.ELECTRON_BUILD_TIME) res.set('buildDate', env.ELECTRON_BUILD_TIME)
     return res
+  })
+
+  /**
+   * 获取系统中的字体信息
+   */
+  ipcMain.handle('set:getSysFontFamilies', async () => {
+    return [...new Set(await fontList.getFonts())]
   })
 }
