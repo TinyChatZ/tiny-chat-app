@@ -22,7 +22,9 @@ const api = {
     ipcRenderer.send('set:openDevTools', type)
   },
   getSysInfo: async (): Promise<Map<string, string>> =>
-    (await ipcRenderer.invoke('set:getSysInfo')) as Map<string, string>
+    (await ipcRenderer.invoke('set:getSysInfo')) as Map<string, string>,
+  getSysFontFamilies: async (): Promise<Array<string>> =>
+    ipcRenderer.invoke('set:getSysFontFamilies')
 }
 
 // handlers for renderer

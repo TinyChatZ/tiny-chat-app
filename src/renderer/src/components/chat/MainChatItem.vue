@@ -5,19 +5,10 @@ import MainChatItemToolBar from './MainChatItemToolBar.vue'
 import { useChatgptStore } from '@renderer/stores/ChatgptStore'
 import { NPopover, NButton, useMessage } from 'naive-ui'
 import { ref } from 'vue'
-import { useSettingStore } from '@renderer/stores/SettingStore'
-
-// icon todo 为什么另一种方式不可以
-import user from '@renderer/assets/icons/chat-user-icon.svg'
-import userDark from '@renderer/assets/icons/chat-user-icon-dark.svg'
-
-import assiatant from '@renderer/assets/icons/chat-assistant-icon.svg'
-import assiatantDark from '@renderer/assets/icons/chat-assistant-icon-dark.svg'
+import { getChatAssistantIcon, getChatUserIcon } from '@renderer/utils/IconUtils'
 
 // 用于管理MainChatList
 const chatgptStore = useChatgptStore()
-// 获取系统配置
-const setting = useSettingStore()
 // 用于发送消息
 const message = useMessage()
 // 外部传递props
@@ -54,17 +45,11 @@ const action = ref({
           <n-button text>
             <n-icon>
               <template v-if="props.item.role === 'user'">
-                <img
-                  class="w-8 h-8"
-                  :src="setting.general.dispalyMode === 'dark' ? userDark : user"
-                />
+                <img class="w-8 h-8" :src="getChatUserIcon()" />
               </template>
               <template v-if="props.item.role === 'assistant'">
                 <!-- 该图像来源于OpenAI官网 -->
-                <img
-                  class="w-8 h-8"
-                  :src="setting.general.dispalyMode === 'dark' ? assiatantDark : assiatant"
-                />
+                <img class="w-8 h-8" :src="getChatAssistantIcon()" />
               </template>
             </n-icon>
           </n-button>

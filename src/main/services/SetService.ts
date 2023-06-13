@@ -1,4 +1,4 @@
-import { app } from 'electron'
+import { app, nativeTheme } from 'electron'
 import path from 'path'
 import fs from 'fs/promises'
 import 'highlight.js'
@@ -61,6 +61,21 @@ export const setSettingParams = async (
   } else {
     settingCache = getDefaultSetting()
     return Promise.resolve(RpcUtils.error(''))
+  }
+}
+/**
+ * 更新设置信息钩子，触发更新时进行一些操作
+ * @param _event
+ * @param data
+ * @returns
+ */
+export const beforeSetSettingParams = async (
+  newData: SettingType,
+  oldData: SettingType
+): Promise<void> => {
+  // 修改了主题需要通知所有渲染器
+  if (oldData.general.displayMode !== newData.general.displayMode) {
+    nativeTheme.themeSource = newData.general.displayMode
   }
 }
 

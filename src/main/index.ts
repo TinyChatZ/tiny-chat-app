@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, nativeTheme } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 
 import { ChatWindow } from './windows/ChatWindow'
@@ -35,6 +35,8 @@ app.whenReady().then(async () => {
 
   // 主进程注册各种事件
   registerEvent()
+  // 注册当前默认主题(如果无法查到设置，则浅色主题)
+  nativeTheme.themeSource = setParam.data?.general.displayMode ?? 'light'
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common

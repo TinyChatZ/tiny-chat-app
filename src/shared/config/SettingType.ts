@@ -6,6 +6,23 @@ interface SettingChatgptType {
    * OpenAi token
    */
   token: string
+  /** ChatGPT额外选项 */
+  options: {
+    /** 请求对话长度限制 */
+    limitsLength: number
+    /**
+     * 触发限制的行为
+     * failSafe：自动丢弃限制之前的内容
+     * failFast：直接请求报错，用户可以刷新
+     */
+    limitsBehavior: 'failSafe' | 'failFast'
+    /**
+     * 限制的统计方式
+     * character: 字符达到限制是触发行为（可能造成某个回答断章取义）
+     * block：按照每次回答为单位，保留触发行为的前一个回答（单个回答过长时容易触发）
+     */
+    limitsCalculate: 'character' | 'block'
+  }
   /** 代理服务配置 */
   proxy: {
     /** 代理服务地址 */
@@ -17,7 +34,7 @@ interface SettingChatgptType {
 /** 通用设置 */
 interface SettingGeneralType {
   /** 显示模式 */
-  dispalyMode: 'auto' | 'dark' | 'light'
+  displayMode: 'system' | 'dark' | 'light'
   /** 窗口置顶 */
   windowTop: boolean
   /** 保存窗口位置 */
@@ -71,13 +88,18 @@ interface SettingType {
 const getDefaultSetting = (): SettingType => ({
   chatgpt: {
     token: '',
+    options: {
+      limitsLength: 5000,
+      limitsBehavior: 'failSafe',
+      limitsCalculate: 'block'
+    },
     proxy: {
       address: '',
       param: ''
     }
   },
   general: {
-    dispalyMode: 'light',
+    displayMode: 'system',
     windowTop: false,
     saveWindowPosition: false,
     windowSize: {

@@ -49,6 +49,9 @@ declare global {
 
       /**获取系统信息 */
       getSysInfo: () => Promise<Map<string, string>>
+
+      /**获取系统可用字体 */
+      getSysFontFamilies: () => Promise<Array<string>>
     }
     handler: {
       /**

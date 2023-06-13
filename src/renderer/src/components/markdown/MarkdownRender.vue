@@ -70,18 +70,8 @@ function buildCodeBlock(str: string, lang?: string, other?: string): string {
   <div v-html="content"></div>
 </template>
 
+<!-- 此处需要global样式 -->
 <style lang="less">
-.copy-btn {
-  top: 2px;
-  right: 4px;
-  z-index: 10;
-  color: #333;
-  cursor: pointer;
-  background-color: #fff;
-  border: 0;
-  border-radius: 2px;
-}
-
 // 代码块背景
 .code_public_style {
   background: #f8f8f8;
@@ -110,5 +100,36 @@ function buildCodeBlock(str: string, lang?: string, other?: string): string {
 
 .code_scrollbar::-webkit-scrollbar-corner {
   background: #179a16;
+}
+
+@media (prefers-color-scheme: dark) {
+  // 代码块背景
+  .code_public_style {
+    background: #333;
+  }
+  // 滚动条相关代码
+  .code_scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    /**/
+  }
+
+  .code_scrollbar::-webkit-scrollbar-track {
+    background: rgb(49, 49, 49);
+    border-radius: 2px;
+  }
+
+  .code_scrollbar::-webkit-scrollbar-thumb {
+    background: #141414;
+    border-radius: 10px;
+  }
+
+  .code_scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #c0c0c0;
+  }
+
+  .code_scrollbar::-webkit-scrollbar-corner {
+    background: #179a16;
+  }
 }
 </style>
