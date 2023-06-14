@@ -90,7 +90,7 @@ const getDefaultSetting = (): SettingType => ({
     token: '',
     options: {
       limitsLength: 5000,
-      limitsBehavior: 'failSafe',
+      limitsBehavior: 'failFast',
       limitsCalculate: 'block'
     },
     proxy: {

@@ -208,12 +208,16 @@ function gotoHash(id: string): void {
                     <n-radio-button value="failFast">提示错误</n-radio-button>
                   </n-radio-group>
                 </n-form-item>
-                <n-form-item label="文本限制计量">
-                  <n-radio-group v-model:value="formValue.chatgpt.options.limitsCalculate">
-                    <n-radio-button value="character">按字符计算</n-radio-button>
-                    <n-radio-button value="block">按问答计算</n-radio-button>
-                  </n-radio-group>
-                </n-form-item>
+                <n-collapse-transition
+                  :show="formValue.chatgpt.options.limitsBehavior === 'failSafe'"
+                >
+                  <n-form-item label="文本限制计量">
+                    <n-radio-group v-model:value="formValue.chatgpt.options.limitsCalculate">
+                      <n-radio-button value="character">按字符计算</n-radio-button>
+                      <n-radio-button value="block">按问答计算</n-radio-button>
+                    </n-radio-group>
+                  </n-form-item>
+                </n-collapse-transition>
                 <n-form-item label="代理:是否使用代理模式">
                   <n-switch v-model:value="showProxy" />
                 </n-form-item>

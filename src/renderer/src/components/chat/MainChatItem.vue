@@ -27,7 +27,7 @@ const action = ref({
   },
   drop() {
     try {
-      chatgptStore.dropChatListItem(props.item.position)
+      chatgptStore.dropChatListItem(props.item.id)
     } catch (e) {
       message.error('没有删除成功')
     }
