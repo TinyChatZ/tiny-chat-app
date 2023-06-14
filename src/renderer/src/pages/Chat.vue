@@ -15,7 +15,7 @@ const showDialog = (): void => {
     <div class="p-3 content-center flex items-center" style="-webkit-app-region: drag">
       <!-- 主要图标 -->
       <NButton style="-webkit-app-region: no-drag" size="large" circle @click="showDialog">
-        <img src="@renderer/assets/icons/icon-grey.png" style="width: 100%; height: auto;" />
+        <img src="@renderer/assets/icons/icon-grey.png" style="width: 100%; height: auto" />
       </NButton>
       <div class="inline-block text-xl pl-2 select-none" style="line-height: 40px">TinyChat</div>
       <!-- 配置界面，刷新和修改 -->
