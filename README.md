@@ -13,19 +13,30 @@
 ## 技术清单
 
 - [electron](https://www.electronjs.org/): 创建桌面客户端环境
-- [electron-vite](https://cn-evite.netlify.app/): electron下的打包工具，作者人很不错
+- [electron-vite](https://cn-evite.netlify.app/): electron下的打包工具，作者人很不错，也感谢群里小伙伴的帮助
 - [vue.js](https://cn.vuejs.org/): vue.js
 - [highlight.js](https://highlightjs.org/): 代码端高亮样式
-- [vue-markdown-render](https://www.npmjs.com/package/vue-markdown-render): vue中的markdown渲染
-- [naive-ui](https://www.naiveui.com/zh-CN/): 一个尤推荐过得UI，我也很喜欢他
+- [naive-ui](https://www.naiveui.com/zh-CN/): 一个尤大推荐过得UI，我也很喜欢他
 - [tailwindcss](https://www.tailwindcss.cn/): 告别写CSS的苦恼
-- [pinia](https://pinia.vuejs.org/): 一个很不错的状态管理工具，服务于vue3
+- [pinia](https://pinia.vuejs.org/): 一个很不错的状态管理工具，用于vue3
+- [vue-router](https://router.vuejs.org/): 路由管理，多个窗口想要共用一个render也只能这样了
+- [vue-markdown-render](https://www.npmjs.com/package/vue-markdown-render): 现在直接使用了markdown-it也就是他的上游
+- [loadsh](https://lodash.com/docs/): chatgpt推荐给我的，用起来真香
 
 ## 编译
 
 <!-- todo 未完成 -->
 
 ## 更新日志
+
+### 2023-06-14
+
+🎉1.0.2-release
+
+- 时隔两个月，把之前的一些bug都填好了
+- 支持深色主题切换（个人强烈darkMode使用者）
+- 优化markdown代码渲染（看上去渲染html文档没有太多bug了）
+- 完善配置界面，支持一些功能（字体、超出限制策略）
 
 ### 2023-04-25
 

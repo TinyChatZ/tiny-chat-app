@@ -1,6 +1,6 @@
 {
   "name": "tiny-chat",
-  "version": "1.0.1-release",
+  "version": "1.0.2-release",
   "description": "a simple chat gpt client",
   "main": "./out/main/index.js",
   "author": "jaken",
