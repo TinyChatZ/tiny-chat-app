@@ -54,37 +54,43 @@ const sendData = async (): Promise<void> => {
     loading.value = false
     return
   }
-  const { url, options } = chatgptStore.getRequestParam
-  // 设置返回值
-  const position = chatgptStore.createChatListItem('assistant')
-  // 发起EventSource调用
-  getEventSource<{ choices: Array<{ delta: { role?: string; content?: string } }> }>(
-    url,
-    options,
-    // 渲染结果
-    (res) => {
-      if (typeof res.data !== 'string') {
-        if (res.data?.choices[0].delta?.role) {
-          chatgptStore.chatList[chatgptStore.getRealIndex(position)].role =
-            res.data?.choices[0].delta?.role
-        } else if (res.data?.choices[0].delta?.content) {
-          chatgptStore.chatList[chatgptStore.getRealIndex(position)].content +=
-            res.data?.choices[0].delta?.content
-          // @ts-ignore 暂时忽略
-          setTimeout(() => scrollbar.value.scrollBy({ top: 300 }), 100)
+  try {
+    const { url, options } = chatgptStore.getRequestParam
+    // 设置返回值
+    const position = chatgptStore.createChatListItem('assistant')
+    // 发起EventSource调用
+    getEventSource<{ choices: Array<{ delta: { role?: string; content?: string } }> }>(
+      url,
+      options,
+      // 渲染结果
+      (res) => {
+        if (typeof res.data !== 'string') {
+          if (res.data?.choices[0].delta?.role) {
+            chatgptStore.chatList[chatgptStore.getRealIndex(position)].role =
+              res.data?.choices[0].delta?.role
+          } else if (res.data?.choices[0].delta?.content) {
+            chatgptStore.chatList[chatgptStore.getRealIndex(position)].content +=
+              res.data?.choices[0].delta?.content
+            // @ts-ignore 暂时忽略
+            setTimeout(() => scrollbar.value.scrollBy({ top: 300 }), 100)
+          }
         }
       }
-    }
-  )
-    .then(() => {
-      loading.value = false
-      // console.log(chatgptStore.chatList[chatgptStore.getRealIndex(position)])
-    })
-    .catch(() => {
-      message.error('调用失败，请检查网络或token')
-      chatgptStore.dropChatListItem(position)
-      loading.value = false
-    })
+    )
+      .then(() => {
+        loading.value = false
+        // console.log(chatgptStore.chatList[chatgptStore.getRealIndex(position)])
+      })
+      .catch(() => {
+        chatgptStore.dropChatListItem(position)
+        message.error('调用失败，请检查网络或token')
+        loading.value = false
+      })
+  } catch (e) {
+    message.error(e as string)
+  } finally {
+    loading.value = false
+  }
 }
 
 // 刷新数据

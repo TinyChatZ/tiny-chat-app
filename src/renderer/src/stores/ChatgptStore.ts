@@ -5,11 +5,16 @@ import { useSettingStore } from './SettingStore'
  * 对话Item
  */
 export interface ChatItem {
+  /** 角色 */
   role: string
+  /** 文本内容 */
   content: string
+  /** 创建日期 */
   date: Date
+  /** chatGPT返回的ticks */
   ticks?: number
-  position: number
+  /** 元素唯一主键 */
+  id: number
 }
 /**
  * ChatgptStoreState类型
@@ -18,6 +23,7 @@ export interface ChatgptStoreState {
   chatList: Array<ChatItem>
   curQuestion: string
 }
+const settingStore = useSettingStore()
 export const useChatgptStore = defineStore('chatgpt', {
   state: (): ChatgptStoreState => ({
     chatList: [],
@@ -26,7 +32,7 @@ export const useChatgptStore = defineStore('chatgpt', {
   getters: {
     getRequestParam(): { url: string; options: EventSourceOptions } {
       // 不会重复创建 https://pinia.vuejs.org/zh/cookbook/composing-stores.html#shared-getters
-      const setting = useSettingStore().chatgpt
+      const setting = settingStore.chatgpt
       // 如果拿不到token就配置
       if (!setting?.token) {
         throw new Error('token is not exists')
@@ -42,11 +48,52 @@ export const useChatgptStore = defineStore('chatgpt', {
       const reqData = {
         model: 'gpt-3.5-turbo',
         stream: true,
-        messages: this.chatList
-          .filter((item) => item.role != 'system')
-          .map((item) => ({ role: item.role, content: item.content }))
+        messages: this.getLimitsData.map((item) => ({ role: item.role, content: item.content }))
       }
       return { url, options: { method: 'POST', headers: headers, body: reqData } }
+    },
+    /**
+     * 计算请求限制策略执行后的数据
+     */
+    getLimitsData(): Array<ChatItem> {
+      const calculateType = settingStore.chatgpt.options.limitsCalculate
+      const limitsBehavior = settingStore.chatgpt.options.limitsBehavior
+      const limits = settingStore.chatgpt.options.limitsLength
+      let limitData = new Array<ChatItem>()
+      let length = 0
+      let curLength = 0
+      // 找到超过的起始位置
+      let i
+      for (i = this.chatList.length - 1; i >= 0; i--) {
+        const item = this.chatList[i]
+        curLength = item.content.length
+        length += curLength
+        if (item.role === 'system') continue
+        if (length > limits) {
+          // 代表超过了
+          break
+        }
+      }
+      // 如果i<0表示没有超出直接返回
+      console.log(i)
+      if (i < 0) {
+        return this.chatList
+      }
+      // 如果策略是fail-fast
+      if (limitsBehavior === 'failFast') {
+        throw '对话长度超出限制'
+      } else if (limitsBehavior === 'failSafe') {
+        // 处理超过长度(此时i为首次超过的下标)
+        limitData = this.chatList.slice(i)
+        if (calculateType === 'block' && limitData.length > 1) {
+          limitData = limitData.slice(1)
+        } else if (calculateType === 'character') {
+          limitData[limitData.length - 1].content = limitData[limitData.length - 1].content.slice(
+            limits - length + curLength
+          )
+        }
+      }
+      return limitData
     }
   },
   actions: {
@@ -56,9 +103,9 @@ export const useChatgptStore = defineStore('chatgpt', {
      */
     createUserInfo(message: string): number {
       const index =
-        this.chatList.push({ role: 'user', content: message, date: new Date(), position: -1 }) - 1
+        this.chatList.push({ role: 'user', content: message, date: new Date(), id: -1 }) - 1
       const position = createPositionKey(index)
-      this.chatList[index].position = position
+      this.chatList[index].id = position
       return position
     },
     /**
@@ -72,10 +119,10 @@ export const useChatgptStore = defineStore('chatgpt', {
           content: content ?? '',
           date: date ?? new Date(),
           ticks: ticks,
-          position: -1
+          id: -1
         }) - 1
       const position = createPositionKey(index)
-      this.chatList[index].position = position
+      this.chatList[index].id = position
       return position
     },
     /**
@@ -113,7 +160,7 @@ export const useChatgptStore = defineStore('chatgpt', {
       })
     },
     /**
-     *
+     * 获取真实的索引
      * @param position 传入的位置
      * @returns 真实的数组位置
      */

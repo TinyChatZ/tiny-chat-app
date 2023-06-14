@@ -77,6 +77,11 @@ export const beforeSetSettingParams = async (
   if (oldData.general.displayMode !== newData.general.displayMode) {
     nativeTheme.themeSource = newData.general.displayMode
   }
+  // 设置置顶需通知所有Chat窗口
+  if (oldData.general.windowTop !== newData.general.windowTop) {
+    const chatWindow = WindowsManageUtils.getByName('ChatWindow')
+    chatWindow?.content.setAlwaysOnTop(newData.general.windowTop)
+  }
 }
 
 /**
