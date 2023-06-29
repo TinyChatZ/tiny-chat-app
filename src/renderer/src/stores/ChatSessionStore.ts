@@ -24,6 +24,7 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
     sessions: new Map(),
     indexMap: new Map(),
     sync: false,
+    curChatSessionId: undefined,
     lastModify: new Date()
   }),
   getters: {
@@ -51,7 +52,7 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
      * @returns
      */
     async createNewSession(): Promise<ChatSessionItemType> {
-      const chatSession = await window.api.getChatSessionItem('')
+      const chatSession = await window.api.getChatSessionItem()
       return chatSession
     },
     /**
@@ -66,6 +67,7 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
       } else {
         chatSessionItem = await window.api.getChatSessionItem(index.id)
       }
+      console.log(chatSessionItem)
       this.curChatSessionId = chatSessionItem?.id
       return chatSessionItem
     }

@@ -5,13 +5,15 @@ import { NList, NListItem, NButton } from 'naive-ui'
 const chatSessiontStore = useChatSessionStore()
 // 只要在顶层初始化一次即可
 chatSessiontStore.initChatSession()
+
 // 创建新session
 function createNewSession(): void {
   chatSessiontStore.createNewSession()
 }
 // 切换选中的session
 function checkoutSession(item: ChatSessionIndexItemType): void {
-  const sessionItem = chatSessiontStore.loadSession(item)
+  console.log('click', item)
+  chatSessiontStore.loadSession(item)
 }
 </script>
 <template>

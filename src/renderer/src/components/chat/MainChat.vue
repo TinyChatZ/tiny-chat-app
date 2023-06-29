@@ -9,18 +9,18 @@ import {
   NButton,
   NButtonGroup
 } from 'naive-ui'
-import { ref, VNodeRef, computed,watch } from 'vue'
+import { ref, VNodeRef, computed, watch } from 'vue'
 import { getEventSource } from '@renderer/utils/EventSource'
 import { chatgptStoreFactory, useChatgptStore } from '@renderer/stores/ChatgptStore'
 import { useSettingStore } from '@renderer/stores/SettingStore'
 import MainChatItem from './MainChatItem.vue'
-import { mapWritableState } from 'pinia'
+import { mapState, mapWritableState } from 'pinia'
 import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
 
 // 获取消息打印的实例
 const message = useMessage()
 
-const chatSessionStore=useChatSessionStore()
+const chatSessionStore = useChatSessionStore()
 const settingStore = useSettingStore()
 settingStore.getSettingParams()
 
@@ -31,11 +31,19 @@ const question = ref('')
 const loading = ref(false)
 
 // 聊天记录数据（监听session是否有变化）
-watch(()=>chatSessionStore.curChatSessionId,(newValue,oldValue)=>{
-  const data = computed(() => ({ ...mapWritableState(chatgptStoreFactory(''), ['chatList']) }))
-const chatgptStore = useChatgptStore()
-})
 
+let chatgptStore
+watch(
+  () => chatSessionStore.curChatSessionId,
+  (newValue, oldValue) => {
+    console.log(`changed session from ${oldValue} to ${newValue}`)
+    chatgptStore = useChatgptStore(newValue)
+  },
+  { immediate: true }
+)
+const data = computed(() => ({
+  ...mapWritableState(chatgptStoreFactory(chatSessionStore.curChatSessionId), ['chatList'])
+}))
 
 // 聊天记录scrollbar
 const scrollbar = ref<VNodeRef>('')

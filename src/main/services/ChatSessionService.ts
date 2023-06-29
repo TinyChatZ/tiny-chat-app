@@ -29,10 +29,11 @@ export async function getIndexMap(): Promise<Map<string, ChatSessionIndexItemTyp
   if (!initFlag) {
     try {
       const data = await fs.readFile(cachePath.index)
-      cacheIndexMap = JSON.parse(data.toString())
+      cacheIndexMap = new Map(Object.entries(JSON.parse(data.toString())))
       return cacheIndexMap
     } catch (e) {
-      fs.writeFile(cachePath.index, JSON.stringify(new Map()))
+      // 如果直接读取失败，就创建索引
+      await syncStorage({ type: 'index' })
     }
     initFlag = true
     return new Map()
@@ -86,7 +87,7 @@ export async function dropChatSessionItem(id: string): Promise<boolean> {
 export async function getChatSessionItem(
   id: string
 ): Promise<ChatSessionItemStorageType | undefined> {
-  loadDetailItem(id)
+  await loadDetailItem(id)
   return cacheDetailMap.get(id)
 }
 
@@ -116,13 +117,14 @@ async function syncStorage(options: {
 }): Promise<void> {
   // 文件夹不在则创建
   try {
-    fs.access(cachePath.dir)
+    await fs.access(cachePath.dir)
   } catch {
-    fs.mkdir(cachePath.dir, { recursive: true })
+    await fs.mkdir(cachePath.dir, { recursive: true })
   }
   // 刷新索引
   if (options.type === 'index') {
-    fs.writeFile(cachePath.index, JSON.stringify(cacheIndexMap))
+    console.log(cacheIndexMap)
+    await fs.writeFile(cachePath.index, JSON.stringify(Object.fromEntries(cacheIndexMap)))
   }
   // 刷新详情
   else if (options.type === 'detail') {
