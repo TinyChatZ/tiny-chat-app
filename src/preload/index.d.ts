@@ -1,5 +1,6 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
 import { type SettingType } from '../main/types/SettingType'
+import { ChatSessionIndexItemType, ChatSessionItemType } from '@shared/chat/ChatSessionType'
 
 declare global {
   interface RpcResult<T> {
@@ -52,6 +53,18 @@ declare global {
 
       /**获取系统可用字体 */
       getSysFontFamilies: () => Promise<Array<string>>
+
+      /** 初始化chatSession */
+      initChatSessiontIndex: () => Promise<Map<string, ChatSessionIndexItemType>>
+
+      /** 获取/创建一个chatSession详情 */
+      getChatSessionItem: (id?: string) => Promise<ChatSessionItemType>
+
+      /** 修改/删除一个chatSession详情 */
+      modifyChatSessionItem: (
+        item: ChatSessionIndexItemType,
+        op: 'update' | 'delete'
+      ) => Promise<void>
     }
     handler: {
       /**
@@ -60,6 +73,20 @@ declare global {
        * @returns
        */
       updateSettingState: (callback: (e, value) => SettingType) => unknown
+      /**
+       * 在渲染进程中监听ChatSession修改回调
+       * @param callback 新数据的回调，由main发送
+       * @returns void
+       */
+      updateChatSessionState: (
+        callback: (
+          e,
+          value
+        ) => {
+          index: Map<string, ChatSessionIndexItemType>
+          detail: Map<string, ChatSessionItemStorageType>
+        }
+      ) => unknown
     }
   }
 }

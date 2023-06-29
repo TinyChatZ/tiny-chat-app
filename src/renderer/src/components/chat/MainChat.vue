@@ -9,17 +9,18 @@ import {
   NButton,
   NButtonGroup
 } from 'naive-ui'
-import { ref, VNodeRef, computed } from 'vue'
+import { ref, VNodeRef, computed,watch } from 'vue'
 import { getEventSource } from '@renderer/utils/EventSource'
-import { useChatgptStore } from '@renderer/stores/ChatgptStore'
+import { chatgptStoreFactory, useChatgptStore } from '@renderer/stores/ChatgptStore'
 import { useSettingStore } from '@renderer/stores/SettingStore'
 import MainChatItem from './MainChatItem.vue'
 import { mapWritableState } from 'pinia'
+import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
 
 // 获取消息打印的实例
 const message = useMessage()
 
-const chatgptStore = useChatgptStore()
+const chatSessionStore=useChatSessionStore()
 const settingStore = useSettingStore()
 settingStore.getSettingParams()
 
@@ -29,9 +30,12 @@ const question = ref('')
 // 对话框是否展示加载
 const loading = ref(false)
 
-// 聊天记录数据
-// const data: Ref<Array<{ role?: string; content?: string; date?: Date }>> = ref([])
-const data = computed(() => ({ ...mapWritableState(useChatgptStore, ['chatList']) }))
+// 聊天记录数据（监听session是否有变化）
+watch(()=>chatSessionStore.curChatSessionId,(newValue,oldValue)=>{
+  const data = computed(() => ({ ...mapWritableState(chatgptStoreFactory(''), ['chatList']) }))
+const chatgptStore = useChatgptStore()
+})
+
 
 // 聊天记录scrollbar
 const scrollbar = ref<VNodeRef>('')
@@ -59,7 +63,7 @@ const sendData = async (): Promise<void> => {
     // 设置返回值
     const position = chatgptStore.createChatListItem('assistant')
     // 发起EventSource调用
-    getEventSource<{ choices: Array<{ delta: { role?: string; content?: string } }> }>(
+    await getEventSource<{ choices: Array<{ delta: { role?: string; content?: string } }> }>(
       url,
       options,
       // 渲染结果
@@ -133,7 +137,6 @@ const refresh = (): void => {
       </div>
     </div>
   </div>
-  <!-- 输入token的对话框 -->
 </template>
 
 <style></style>

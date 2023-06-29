@@ -1,3 +1,4 @@
+// 配置相关服务
 import { app, nativeTheme } from 'electron'
 import path from 'path'
 import fs from 'fs/promises'

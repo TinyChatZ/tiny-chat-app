@@ -5,7 +5,9 @@ import { SetWindow } from '../windows/SetWindow'
 import { SettingType } from '@shared/config/SettingType'
 import * as SetService from '../services/SetService'
 import { WindowsManageUtils } from '../utils/WindowManageUtils'
+import * as ChatSessionService from '../services/ChatSessionService'
 import * as fontList from 'font-list'
+import { ChatSessionIndexItemType, ChatSessionItemStorageType } from '@shared/chat/ChatSessionType'
 export default function registerEvent(): void {
   // Public
 
@@ -82,4 +84,33 @@ export default function registerEvent(): void {
   ipcMain.handle('set:getSysFontFamilies', async () => {
     return [...new Set(await fontList.getFonts())]
   })
+
+  /**
+   * 初始化chatSessionIndex
+   *
+   * renderer首次加载ChatSessionStore是调用此方法，获取索引
+   */
+  ipcMain.handle('chatsession:initChatSessionIndex', async () => {
+    return await ChatSessionService.getIndexMap()
+  })
+
+  /**
+   * 创建或者加载一个SessionIndex
+   */
+  ipcMain.handle('chatsession:getChatSessionItem', async (_event, id?: string) => {
+    if (id) {
+      return await ChatSessionService.getChatSessionItem(id)
+    } else {
+      const id = await ChatSessionService.saveIndexItem()
+      return await ChatSessionService.getChatSessionItem(id)
+    }
+  })
+  /** 修改/删除一个chatSession详情 */
+  ipcMain.on(
+    'chatsession:modifyChatSessionItem',
+    async (_event, item: ChatSessionIndexItemType, op: 'update' | 'delete') => {
+      if (op === 'delete') ChatSessionService.dropChatSessionItem(item.id)
+      else if (op === 'update') ChatSessionService.saveIndexItem(item as ChatSessionItemStorageType)
+    }
+  )
 }

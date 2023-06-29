@@ -30,6 +30,13 @@ interface SettingChatgptType {
     /** 代理服务token */
     param: string
   }
+  /** 会话管理 */
+  session: {
+    /** 保存路径 */
+    savePath: string
+    /** 保存文件前缀 */
+    savePrefix: string
+  }
 }
 /** 通用设置 */
 interface SettingGeneralType {
@@ -96,6 +103,10 @@ const getDefaultSetting = (): SettingType => ({
     proxy: {
       address: '',
       param: ''
+    },
+    session: {
+      savePath: '',
+      savePrefix: ''
     }
   },
   general: {
