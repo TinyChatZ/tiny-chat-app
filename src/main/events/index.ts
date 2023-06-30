@@ -106,7 +106,7 @@ export default function registerEvent(): void {
     }
   })
   /** 修改/删除一个chatSession详情 */
-  ipcMain.on(
+  ipcMain.handle(
     'chatsession:modifyChatSessionItem',
     async (_event, item: ChatSessionIndexItemType, op: 'update' | 'delete') => {
       if (op === 'delete') ChatSessionService.dropChatSessionItem(item.id)

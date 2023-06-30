@@ -1,11 +1,15 @@
-import { EventSourceOptions } from '@renderer/utils/EventSource'
+import { EventSourceOptions, getEventSource } from '@renderer/utils/EventSource'
 import { defineStore } from 'pinia'
 import { useSettingStore } from './SettingStore'
 import { ChatItem } from '@shared/chat/ChatType'
+import { TinyResult, TinyResultBuilder } from '@shared/common/TinyResult'
+import { StatusCode } from '@shared/common/StatusCode'
+import { useChatSessionStore } from './ChatSessionStore'
 /**
  * ChatgptStoreState类型
  */
 export interface ChatgptStoreState {
+  id?: string
   chatList: Array<ChatItem>
   curQuestion: string
 }
@@ -19,8 +23,9 @@ const settingStore = useSettingStore()
 export const useChatgptStore = (id?: string) => chatgptStoreFactory(id)()
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const chatgptStoreFactory = (id?: string) =>
-  defineStore(`chatgpt${id ?? '_' + id}`, {
+  defineStore(`chatgpt${id && '_' + id}`, {
     state: (): ChatgptStoreState => ({
+      id,
       chatList: [],
       curQuestion: ''
     }),
@@ -70,15 +75,15 @@ export const chatgptStoreFactory = (id?: string) =>
           }
         }
         // 如果i<0表示没有超出直接返回
-        console.log(i)
         if (i < 0) {
-          return this.chatList
+          limitData = this.chatList
         }
         // 如果策略是fail-fast
-        if (limitsBehavior === 'failFast') {
+        else if (limitsBehavior === 'failFast') {
           throw '对话长度超出限制'
-        } else if (limitsBehavior === 'failSafe') {
-          // 处理超过长度(此时i为首次超过的下标)
+        }
+        // 处理超过长度(此时i为首次超过的下标)
+        else if (limitsBehavior === 'failSafe') {
           limitData = this.chatList.slice(i)
           if (calculateType === 'block' && limitData.length > 1) {
             limitData = limitData.slice(1)
@@ -88,7 +93,8 @@ export const chatgptStoreFactory = (id?: string) =>
             )
           }
         }
-        return limitData
+        // 过滤掉系统消息（前面计算时已经忽略了系统消息但是没有过滤）
+        return limitData.filter((item) => item.role !== 'system')
       }
     },
     actions: {
@@ -155,6 +161,50 @@ export const chatgptStoreFactory = (id?: string) =>
         })
       },
       /**
+       * 创建一个提问请求
+       * @param question 需要请求的用户问题
+       * @param refreshHook 刷新钩子，stream模式下，每次更新数据是回调
+       */
+      async sendChatGPTQuery(
+        question: string,
+        refreshHook?: () => void
+      ): Promise<TinyResult<void>> {
+        this.createUserInfo(question)
+        const gptSetting = settingStore.chatgpt
+        if (!gptSetting?.token) {
+          return TinyResultBuilder.buildException(StatusCode.E20001)
+        }
+        const { url, options } = this.getRequestParam
+        const position = this.createChatListItem('assistant')
+        // 发起EventSource调用
+        try {
+          await getEventSource<{ choices: Array<{ delta: { role?: string; content?: string } }> }>(
+            url,
+            options,
+            // 渲染结果
+            (res) => {
+              if (typeof res.data !== 'string') {
+                if (res.data?.choices[0].delta?.role) {
+                  this.chatList[this.getRealIndex(position)].role = res.data?.choices[0].delta?.role
+                } else if (res.data?.choices[0].delta?.content) {
+                  this.chatList[this.getRealIndex(position)].content +=
+                    res.data?.choices[0].delta?.content
+                  refreshHook && refreshHook()
+                }
+              }
+            }
+          )
+        } catch (e) {
+          this.dropChatListItem(position)
+          return TinyResultBuilder.buildException(StatusCode.E20002)
+        } finally {
+          const chatSessionStore = useChatSessionStore()
+          // 同步对话记录
+          this.id && (await chatSessionStore.syncSessionInfo(this.id, this.chatList))
+        }
+        return TinyResultBuilder.buildSuccess()
+      },
+      /**
        * 获取真实的索引
        * @param position 传入的位置
        * @returns 真实的数组位置
@@ -163,6 +213,17 @@ export const chatgptStoreFactory = (id?: string) =>
         const index = innerPositionMap.get(position)
         if (!index) throw new Error('invalid position')
         return index
+      },
+      /**
+       * 刷新内部维护的映射表
+       * 首次加载，或者长时间改动index顺序时可能需要刷新一下维护的映射表
+       * 注意调用此方法，原先映射关系将全部失效
+       */
+      refreshIndexMap(): void {
+        innerPositionMap.clear()
+        for (let i = 0; i < this.chatList.length; i++) {
+          innerPositionMap.set(this.chatList[i].id, i)
+        }
       }
     }
   })

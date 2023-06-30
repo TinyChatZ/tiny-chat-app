@@ -1,5 +1,9 @@
 import { ChatSessionIndexItemType, ChatSessionItemType } from '@shared/chat/ChatSessionType'
+import { ChatItem } from '@shared/chat/ChatType'
+import { StatusCode } from '@shared/common/StatusCode'
+import { TinyResult, TinyResultBuilder } from '@shared/common/TinyResult'
 import { defineStore } from 'pinia'
+import { useChatgptStore } from './ChatgptStore'
 export interface ChatSessionStateType {
   /**当前加载的session */
   sessions: Map<string, ChatSessionItemType>
@@ -66,10 +70,42 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
         chatSessionItem = this.sessions.get(index.id)
       } else {
         chatSessionItem = await window.api.getChatSessionItem(index.id)
+        if (chatSessionItem) this.sessions.set(chatSessionItem.id, chatSessionItem)
       }
-      console.log(chatSessionItem)
-      this.curChatSessionId = chatSessionItem?.id
+      // 创建ChatGPT Store并写入数据
+      if (chatSessionItem) {
+        const chatgptStore = useChatgptStore(chatSessionItem.id)
+        chatgptStore.chatList = chatSessionItem.chatList ?? []
+        chatgptStore.refreshIndexMap()
+        this.curChatSessionId = chatSessionItem?.id
+      } else {
+        console.error('载入的chatgptStore为空')
+      }
+
       return chatSessionItem
+    },
+    /**
+     * 同步sessionInfo到持久化
+     * @param id
+     * @param chatList
+     * @returns
+     */
+    async syncSessionInfo(
+      id: string,
+      chatList: Array<ChatItem>
+    ): Promise<TinyResult<ChatSessionItemType | undefined>> {
+      console.log(id)
+      let session = this.sessions.get(id)
+      if (session) {
+        session.chatList = chatList
+        session = Object.assign({}, session)
+        session.chatList = session.chatList.map((item) => Object.assign({}, item))
+        console.log(Object.assign({}, session))
+        await window.api.modifyChatSessionItem(Object.assign({}, session), 'update')
+        return TinyResultBuilder.buildSuccess(session)
+      } else {
+        return TinyResultBuilder.buildException(StatusCode.E20001)
+      }
     }
   }
 })
