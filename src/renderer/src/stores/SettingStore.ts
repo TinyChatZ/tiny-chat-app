@@ -2,8 +2,17 @@ import { defineStore } from 'pinia'
 import { type SettingType, getDefaultSetting } from '@shared/config/SettingType'
 import { useMessage } from 'naive-ui'
 
+/** 一些运行时共享的状态，无需持久化 */
+export interface RuntimeSettingParams {
+  /** 是否展示完整对话界面 */
+  showDialogState: boolean
+}
+
 const useSettingStore = defineStore('setting', {
-  state: (): SettingType => getDefaultSetting(),
+  state: (): SettingType & RuntimeSettingParams => ({
+    ...getDefaultSetting(),
+    showDialogState: true
+  }),
   getters: {
     getUrl(): string {
       return this.chatgpt?.proxy?.address || 'https://api.openai.com' + '/v1/chat/completions'

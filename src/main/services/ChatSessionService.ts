@@ -1,10 +1,10 @@
 // 对话中会话管理服务
 
 import {
-  ChatSessionIndexItemType,
-  ChatSessionItemStorageType,
-  getChatSessionIndexItemDefault,
-  getChatSessionItemStorageTypeDefault
+  ChatSessionIndexType,
+  ChatSessionItemType,
+  getChatSessionIndexDefault,
+  getChatSessionItemDefault
 } from '@shared/chat/ChatSessionType'
 import { getConfigPath } from './SetService'
 import path from 'path'
@@ -20,12 +20,12 @@ const cachePath = {
 }
 
 /** 缓存索引的Map */
-let cacheIndexMap: Map<string, ChatSessionIndexItemType> = new Map()
-const cacheDetailMap: Map<string, ChatSessionItemStorageType> = new Map()
+let cacheIndexMap: Map<string, ChatSessionIndexType> = new Map()
+const cacheDetailMap: Map<string, ChatSessionItemType> = new Map()
 let initFlag = false
 
 /** 获取索引Map */
-export async function getIndexMap(): Promise<Map<string, ChatSessionIndexItemType>> {
+export async function getIndexMap(): Promise<Map<string, ChatSessionIndexType>> {
   if (!initFlag) {
     try {
       const data = await fs.readFile(cachePath.index)
@@ -43,21 +43,24 @@ export async function getIndexMap(): Promise<Map<string, ChatSessionIndexItemTyp
 }
 
 /** 创建或者更新一条索引记录,对生成对应的detail */
-export async function saveIndexItem(detailItem?: ChatSessionItemStorageType): Promise<string> {
+export async function saveIndexItem(detailItem?: ChatSessionItemType): Promise<string> {
   try {
     // 创建一个索引
     if (!detailItem) {
-      const indexItem = getChatSessionIndexItemDefault()
+      const indexItem = getChatSessionIndexDefault()
       cacheIndexMap.set(indexItem.id, indexItem)
       await syncStorage({ type: 'index' })
-      detailItem = getChatSessionItemStorageTypeDefault(indexItem)
+      detailItem = getChatSessionItemDefault(indexItem)
       await syncStorage({ type: 'detail', item: detailItem, op: 'create' })
       cacheDetailMap.set(detailItem.id, detailItem)
       // todo 同步到renderer
       return detailItem.id
     } else {
       // 修改一个索引
-      cacheIndexMap.set(detailItem.id, detailItem as ChatSessionIndexItemType)
+      cacheIndexMap.set(detailItem.id, {
+        ...detailItem,
+        chatList: undefined
+      } as ChatSessionIndexType)
       await syncStorage({ type: 'index' })
       cacheDetailMap.set(detailItem.id, detailItem)
       await syncStorage({ type: 'detail', item: detailItem, op: 'update' })
@@ -84,9 +87,7 @@ export async function dropChatSessionItem(id: string): Promise<boolean> {
  * 从本地空间获取会话记录
  * @param index 可以为id或者对象本身
  */
-export async function getChatSessionItem(
-  id: string
-): Promise<ChatSessionItemStorageType | undefined> {
+export async function getChatSessionItem(id: string): Promise<ChatSessionItemType | undefined> {
   await loadDetailItem(id)
   return cacheDetailMap.get(id)
 }
@@ -112,7 +113,7 @@ async function loadDetailItem(id: string): Promise<void> {
  */
 async function syncStorage(options: {
   type: 'index' | 'detail'
-  item?: ChatSessionItemStorageType
+  item?: ChatSessionItemType
   op?: 'create' | 'update' | 'delete'
 }): Promise<void> {
   // 文件夹不在则创建
@@ -123,7 +124,6 @@ async function syncStorage(options: {
   }
   // 刷新索引
   if (options.type === 'index') {
-    console.log(cacheIndexMap)
     await fs.writeFile(cachePath.index, JSON.stringify(Object.fromEntries(cacheIndexMap)))
   }
   // 刷新详情

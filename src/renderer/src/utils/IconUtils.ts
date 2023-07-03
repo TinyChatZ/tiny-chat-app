@@ -11,6 +11,9 @@ import assiatantDark from '@renderer/assets/icons/chat-assistant-icon-dark.svg'
 import settingIconDark from '@renderer/assets/icons/settings-icon-dark.svg'
 import settingIcon from '@renderer/assets/icons/settings-icon.svg'
 
+import chatSessionAddIcon from '@renderer/assets/icons/chat-session-add-icon.svg'
+import chatSessionAddIconDark from '@renderer/assets/icons/chat-session-add-icon-dark.svg'
+
 import { useSettingStore } from '@renderer/stores/SettingStore'
 
 const setting = useSettingStore()
@@ -37,4 +40,8 @@ export function getChatAssistantIcon(): string {
  */
 export function getSettingIcon(): string {
   return setting.getDisplayMode === 'dark' ? settingIconDark : settingIcon
+}
+
+export function getChatSessionAddIcon(): string {
+  return setting.getDisplayMode === 'dark' ? chatSessionAddIconDark : chatSessionAddIcon
 }

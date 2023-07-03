@@ -7,7 +7,7 @@ import * as SetService from '../services/SetService'
 import { WindowsManageUtils } from '../utils/WindowManageUtils'
 import * as ChatSessionService from '../services/ChatSessionService'
 import * as fontList from 'font-list'
-import { ChatSessionIndexItemType, ChatSessionItemStorageType } from '@shared/chat/ChatSessionType'
+import { ChatSessionIndexType } from '@shared/chat/ChatSessionType'
 export default function registerEvent(): void {
   // Public
 
@@ -108,9 +108,9 @@ export default function registerEvent(): void {
   /** 修改/删除一个chatSession详情 */
   ipcMain.handle(
     'chatsession:modifyChatSessionItem',
-    async (_event, item: ChatSessionIndexItemType, op: 'update' | 'delete') => {
+    async (_event, item: ChatSessionIndexType, op: 'update' | 'delete') => {
       if (op === 'delete') ChatSessionService.dropChatSessionItem(item.id)
-      else if (op === 'update') ChatSessionService.saveIndexItem(item as ChatSessionItemStorageType)
+      else if (op === 'update') ChatSessionService.saveIndexItem(item)
     }
   )
 }

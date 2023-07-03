@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type ChatItem } from '@renderer/stores/ChatgptStore'
+import { ChatItem } from '@shared/chat/ChatType'
 import MarkdownRender from '@renderer/components/markdown/MarkdownRender.vue'
 import MainChatItemToolBar from './MainChatItemToolBar.vue'
 import { useChatgptStore } from '@renderer/stores/ChatgptStore'

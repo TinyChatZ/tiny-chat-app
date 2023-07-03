@@ -2,11 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import { RpcResult } from '../main/utils/RpcUtils'
 import { type SettingType } from '@shared/config/SettingType'
-import {
-  ChatSessionIndexItemType,
-  ChatSessionItemStorageType,
-  ChatSessionItemType
-} from '@shared/chat/ChatSessionType'
+import { ChatSessionIndexType, ChatSessionItemType } from '@shared/chat/ChatSessionType'
 import { EventNames } from '@shared/common/EventNames'
 
 // Custom APIs for renderer
@@ -33,7 +29,7 @@ const api = {
     ipcRenderer.invoke('set:getSysFontFamilies'),
 
   /** 初始化chatSession */
-  initChatSessiontIndex: async (): Promise<Map<string, ChatSessionIndexItemType>> =>
+  initChatSessiontIndex: async (): Promise<Map<string, ChatSessionIndexType>> =>
     ipcRenderer.invoke('chatsession:initChatSessionIndex'),
 
   /** 获取一个chatSession详情 */
@@ -41,7 +37,7 @@ const api = {
     await ipcRenderer.invoke('chatsession:getChatSessionItem', id),
 
   /** 修改/删除一个chatSession详情 */
-  modifyChatSessionItem: (item: ChatSessionIndexItemType, op: 'update' | 'delete'): Promise<void> =>
+  modifyChatSessionItem: (item: ChatSessionIndexType, op: 'update' | 'delete'): Promise<void> =>
     ipcRenderer.invoke('chatsession:modifyChatSessionItem', item, op)
 }
 
@@ -54,8 +50,8 @@ const handler = {
       e,
       value
     ) => {
-      index: Map<string, ChatSessionIndexItemType>
-      detail: Map<string, ChatSessionItemStorageType>
+      index: Map<string, ChatSessionIndexType>
+      detail: Map<string, ChatSessionItemType>
     }
   ): unknown => ipcRenderer.on(EventNames.ChatSession_Brocast_SessionUpdate, callback)
 }

@@ -21,6 +21,7 @@ import {
 } from 'naive-ui'
 import { ref, onMounted, watch } from 'vue'
 import { SettingType, getDefaultSetting } from '@shared/config/SettingType'
+import { getChatAssistantIcon } from '@renderer/utils/IconUtils'
 
 const settingStore = useSettingStore()
 const message = useMessage()
@@ -275,7 +276,7 @@ function gotoHash(id: string): void {
               <div class="grid grid-cols-6 place-items-center">
                 <!-- 图标 -->
                 <div class="col-start-2 col-span-4">
-                  <img src="@renderer/assets/icons/main-icon.svg" />
+                  <img :src="getChatAssistantIcon()" />
                 </div>
                 <!-- 简介 -->
                 <div class="col-start-2 col-span-4">
