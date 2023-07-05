@@ -28,6 +28,16 @@ const api = {
   getSysFontFamilies: async (): Promise<Array<string>> =>
     ipcRenderer.invoke('set:getSysFontFamilies'),
 
+  /** 是否让窗口跟着鼠标走；这是网上大佬教的鼠标拖拽方式😂 */
+  windowMove: (move: boolean, windowName: string): void => {
+    ipcRenderer.send('common:windowMove', move, windowName)
+  },
+
+  /** 修改窗口是否忽略鼠标事件，但是不忽略移动事件 */
+  setIgnoreMouseEvent: (ignore: boolean): void => {
+    ipcRenderer.send('chat:setIgnoreMouseEvent', ignore)
+  },
+
   /** 初始化chatSession */
   initChatSessiontIndex: async (): Promise<Map<string, ChatSessionIndexType>> =>
     ipcRenderer.invoke('chatsession:initChatSessionIndex'),

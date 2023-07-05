@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
 import { ChatSessionIndexType } from '@shared/chat/ChatSessionType'
-import { NButton, NPopover, NIcon, useDialog } from 'naive-ui'
+import { NButton, NPopover, NIcon } from 'naive-ui'
 import ChatSessionAddIcon from '@renderer/components/icons/ChatSessionAddIcon.vue'
 import ChatSessionEditIcon from '../icons/ChatSessionEditIcon.vue'
 import ChatSessionSettingsIcon from '../icons/ChatSessionSettingsIcon.vue'
@@ -34,17 +34,8 @@ async function createNewSession(): Promise<void> {
 }
 
 // 退出程序
-const dialog = useDialog()
 const eixtProgram = (): void => {
-  dialog.warning({
-    title: '退出',
-    content: '确定要退出？',
-    positiveText: '确定',
-    negativeText: '不确定',
-    onPositiveClick: () => {
-      window.api.exitProgram()
-    }
-  })
+  window.api.exitProgram()
 }
 </script>
 <template>

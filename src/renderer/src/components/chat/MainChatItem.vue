@@ -3,12 +3,14 @@ import { ChatItem } from '@shared/chat/ChatType'
 import MarkdownRender from '@renderer/components/markdown/MarkdownRender.vue'
 import MainChatItemToolBar from './MainChatItemToolBar.vue'
 import { useChatgptStore } from '@renderer/stores/ChatgptStore'
+import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
 import { NPopover, NButton, useMessage } from 'naive-ui'
 import { ref } from 'vue'
 import { getChatAssistantIcon, getChatUserIcon } from '@renderer/utils/IconUtils'
 
 // 用于管理MainChatList
-const chatgptStore = useChatgptStore()
+const chatSession = useChatSessionStore()
+
 // 用于发送消息
 const message = useMessage()
 // 外部传递props
@@ -27,8 +29,11 @@ const action = ref({
   },
   drop() {
     try {
+      // 每次删除都要计算当前激活的chatgptStore
+      const chatgptStore = useChatgptStore(chatSession.curChatSessionId)
       chatgptStore.dropChatListItem(props.item.id)
     } catch (e) {
+      console.log(e)
       message.error('没有删除成功')
     }
     toolbarPopover.value.setShow(false)

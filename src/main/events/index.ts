@@ -8,6 +8,7 @@ import { WindowsManageUtils } from '../utils/WindowManageUtils'
 import * as ChatSessionService from '../services/ChatSessionService'
 import * as fontList from 'font-list'
 import { ChatSessionIndexType } from '@shared/chat/ChatSessionType'
+import { WindowMove } from '../utils/WindowControlUtils'
 export default function registerEvent(): void {
   // Public
 
@@ -83,6 +84,24 @@ export default function registerEvent(): void {
    */
   ipcMain.handle('set:getSysFontFamilies', async () => {
     return [...new Set(await fontList.getFonts())]
+  })
+
+  /**
+   * 配置是否允许捕获鼠标时间
+   *
+   * 用于处理窗口隐藏是忽略鼠标事件行为
+   */
+  ipcMain.on('chat:setIgnoreMouseEvent', (event, ignore) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.setIgnoreMouseEvents(ignore, { forward: true })
+  })
+
+  ipcMain.on('common:windowMove', (_event, move: boolean, windowId: string) => {
+    const window = WindowsManageUtils.getByName(windowId)
+    if (window) {
+      const windowMove = WindowMove.getInstance(window)
+      move ? windowMove.startMove() : windowMove.endMove()
+    }
   })
 
   /**

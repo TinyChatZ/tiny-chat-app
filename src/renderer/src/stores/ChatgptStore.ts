@@ -12,6 +12,8 @@ export interface ChatgptStoreState {
   id?: string
   chatList: Array<ChatItem>
   curQuestion: string
+  innerPositionMap: Map<number, number>
+  innerPositionCount: number
 }
 const settingStore = useSettingStore()
 
@@ -27,7 +29,9 @@ export const chatgptStoreFactory = (id?: string) =>
     state: (): ChatgptStoreState => ({
       id,
       chatList: [],
-      curQuestion: ''
+      curQuestion: '',
+      innerPositionMap: new Map(),
+      innerPositionCount: 0
     }),
     getters: {
       getRequestParam(): { url: string; options: EventSourceOptions } {
@@ -105,7 +109,7 @@ export const chatgptStoreFactory = (id?: string) =>
       createUserInfo(message: string): number {
         const index =
           this.chatList.push({ role: 'user', content: message, date: new Date(), id: -1 }) - 1
-        const position = createPositionKey(index)
+        const position = this.createPositionKey(index)
         this.chatList[index].id = position
         return position
       },
@@ -122,7 +126,7 @@ export const chatgptStoreFactory = (id?: string) =>
             ticks: ticks,
             id: -1
           }) - 1
-        const position = createPositionKey(index)
+        const position = this.createPositionKey(index)
         this.chatList[index].id = position
         return position
       },
@@ -137,7 +141,7 @@ export const chatgptStoreFactory = (id?: string) =>
         value: { content: string; ticks?: number },
         appendMode: true
       ): void {
-        const index = innerPositionMap.get(position)
+        const index = this.innerPositionMap.get(position)
         if (!index) throw new Error('invalid position: ' + position)
         if (appendMode) {
           this.chatList[index].content += value.content
@@ -152,13 +156,16 @@ export const chatgptStoreFactory = (id?: string) =>
        * 删除列表
        * @param position 需要删除的位置
        */
-      dropChatListItem(position: number): void {
-        const index = innerPositionMap.get(position)
+      async dropChatListItem(position: number): Promise<void> {
+        const index = this.innerPositionMap.get(position)
         if (!index && index != 0) throw new Error('invalid position')
         this.chatList.splice(index, 1)
-        innerPositionMap.forEach((value, key) => {
-          if (value > index) innerPositionMap.set(key, value - 1)
+        this.innerPositionMap.forEach((value, key) => {
+          if (value > index) this.innerPositionMap.set(key, value - 1)
         })
+        const chatSessionStore = useChatSessionStore()
+        // 同步对话记录
+        this.id && (await chatSessionStore.syncSessionInfo(this.id, this.chatList))
       },
       /**
        * 创建一个提问请求
@@ -210,7 +217,7 @@ export const chatgptStoreFactory = (id?: string) =>
        * @returns 真实的数组位置
        */
       getRealIndex(position: number): number {
-        const index = innerPositionMap.get(position)
+        const index = this.innerPositionMap.get(position)
         if (!index) throw new Error('invalid position')
         return index
       },
@@ -220,22 +227,20 @@ export const chatgptStoreFactory = (id?: string) =>
        * 注意调用此方法，原先映射关系将全部失效
        */
       refreshIndexMap(): void {
-        innerPositionMap.clear()
+        this.innerPositionMap.clear()
         for (let i = 0; i < this.chatList.length; i++) {
-          innerPositionMap.set(this.chatList[i].id, i)
+          this.innerPositionMap.set(this.chatList[i].id, i)
         }
+      },
+      /**
+       * 创建一个外部引用的绝对位置
+       * @param index 内部数组的位置
+       * @returns 外部可以引用的绝对位置
+       */
+      createPositionKey(index: number): number {
+        const t = this.innerPositionCount++
+        this.innerPositionMap.set(t, index)
+        return t
       }
     }
   })
-
-/**
- * 内外部位置映射
- * 内部维护一个列表，他的position可能随意变化。外部提供一个唯一id，通过这个map来映射
- */
-const innerPositionMap: Map<number, number> = new Map()
-let count = 0
-const createPositionKey = (index: number): number => {
-  const t = count++
-  innerPositionMap.set(t, index)
-  return t
-}

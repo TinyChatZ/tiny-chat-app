@@ -50,6 +50,7 @@ async function clickRenameSessionName(item: ChatSessionIndexType): Promise<void>
     renameSessionItem.value = item
   }
 }
+
 // 删除session
 async function clickDeleteSessionName(item: ChatSessionIndexType): Promise<void> {
   await chatSessiontStore.deleteSessionInfo(item)
@@ -74,7 +75,12 @@ function checkoutSession(item: ChatSessionIndexType): void {
           </div>
           <div>
             <template v-if="item.id === renameSessionId">
-              <n-input v-model:value="renameSessionName" size="tiny" />
+              <n-input
+                ref="renameSessionInput"
+                v-model:value="renameSessionName"
+                size="medium"
+                :on-blur="(_e) => clickRenameSessionName(item)"
+              />
             </template>
             <template v-else>
               <n-popover>
@@ -82,6 +88,7 @@ function checkoutSession(item: ChatSessionIndexType): void {
                   <n-button
                     :quaternary="!(item.id === chatSessiontStore.curChatSessionId)"
                     :secondary="item.id === chatSessiontStore.curChatSessionId"
+                    :type="item.id === chatSessiontStore.curChatSessionId ? 'primary' : undefined"
                     @click="checkoutSession(item)"
                   >
                     <!-- TODO 这里要做一个媒体查询 -->

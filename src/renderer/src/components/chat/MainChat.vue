@@ -29,13 +29,14 @@ const question = ref('')
 // 对话框是否展示加载
 const loading = ref(false)
 
-// 聊天记录数据（监听session是否有变化）
-
+// 定一个默认的store，即使main出现问题，也可以正常展示一个临时的store
 let chatgptStore = useChatgptStore()
+// 聊天记录数据（监听session是否有变化），变化则切换session
 watch(
   () => chatSessionStore.curChatSessionId,
   (newValue, oldValue) => {
     console.log(`changed session from ${oldValue} to ${newValue}`)
+    loading.value = false
     chatgptStore = useChatgptStore(newValue)
   },
   { immediate: true }
@@ -55,7 +56,6 @@ const sendData = async (): Promise<void> => {
   loading.value = true
   question.value = ''
   const res = await chatgptStore.sendChatGPTQuery(tQuestion, () => {
-    // @ts-ignore 暂时忽略
     setTimeout(() => scrollbar.value.scrollBy({ top: 300 }), 100)
   })
   loading.value = false

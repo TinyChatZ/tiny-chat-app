@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { NButton, NPopover, NScrollbar, NEl } from 'naive-ui'
-import { watch, ref } from 'vue'
+import { ref, watch } from 'vue'
 import MainChat from '@renderer/components/chat/MainChat.vue'
 import SessionList from '@renderer/components/session/SessionList.vue'
 import SessionToolbar from '@renderer/components/session/SessionToolbar.vue'
@@ -9,6 +9,7 @@ import { useSettingStore } from '@renderer/stores/SettingStore'
 
 const settingStore = useSettingStore()
 const chatSessionStore = useChatSessionStore()
+const win = ref(window)
 
 // 只要在顶层初始化一次即可
 chatSessionStore.initChatSession()
@@ -17,17 +18,40 @@ chatSessionStore.initChatSession()
 const showDialog = (): void => {
   settingStore.showDialogState = !settingStore.showDialogState
 }
-// 处理透明度
+
+// 处理透明度及鼠标事件
+const popoverStatus = ref()
+const mouseEnterDrag = ref<boolean>()
+// 监听是否缩小、session选择是否show、鼠标是否进入可拖拽区域
 watch(
-  () => settingStore.showDialogState,
-  (newValue) => {
-    if (!newValue) {
-      document.body.classList.add('body-transparent')
-    } else {
-      document.body.classList.remove('body-transparent')
+  [(): boolean => settingStore.showDialogState, popoverStatus, mouseEnterDrag],
+  ([showDialogState, popoverStatus, mouseEnterDrag], [oldShowDialogState]) => {
+    // 如果窗口缩放没有变化，且窗口是放大的，则忽略所有后续逻辑（减少IPC次数）
+    if (oldShowDialogState === showDialogState && showDialogState) {
+      return
     }
+    let isIgnoreMouseEvent = false
+    // 展开对话时处理透明度和鼠标事件(收缩时忽略鼠标点击事件)
+    if (showDialogState) {
+      document.body.classList.remove('body-transparent')
+      isIgnoreMouseEvent = false
+    } else if (!showDialogState) {
+      document.body.classList.add('body-transparent')
+      isIgnoreMouseEvent = true
+    }
+    // 如果鼠标进入可拖动区域，捕获鼠标事件
+    isIgnoreMouseEvent = !mouseEnterDrag
+    // 如果展开dialog，捕获鼠标时间
+    if (popoverStatus) {
+      isIgnoreMouseEvent = false
+    }
+    window.api.setIgnoreMouseEvent(isIgnoreMouseEvent)
   }
 )
+function onPopoverStatusChange(status: boolean): void {
+  popoverStatus.value = status
+}
+
 // 点击某个session后缩回列表
 const popover = ref()
 function sessionItemSelect(): void {
@@ -37,17 +61,28 @@ function sessionItemSelect(): void {
 
 <template>
   <div class="flex flex-col h-full">
-    <div class="flex" style="-webkit-app-region: drag">
+    <div
+      id="test"
+      class="flex"
+      @mouseover="mouseEnterDrag = true"
+      @mouseout="mouseEnterDrag = false"
+      @mousedown="win.api.windowMove(true, 'ChatWindow')"
+      @mouseup="win.api.windowMove(false, 'ChatWindow')"
+    >
       <n-el
         class="p-3 content-center flex items-center"
         tag="div"
         style="background-color: var(--body-color)"
       >
         <!-- 主要图标 -->
-        <n-popover ref="popover" placement="bottom-start" :delay="300" :duration="500">
+        <n-popover ref="popover" placement="bottom-start" :on-update-show="onPopoverStatusChange">
           <template #trigger>
-            <NButton style="pointer-events: auto" size="large" circle @click="showDialog">
-              <img src="@renderer/assets/icons/icon-grey.png" style="width: 100%; height: auto" />
+            <NButton size="large" circle @click="showDialog">
+              <img
+                draggable="false"
+                src="@renderer/assets/icons/icon-grey.png"
+                style="width: 100%; height: auto"
+              />
             </NButton>
           </template>
           <n-scrollbar style="max-height: 33vh">
@@ -72,11 +107,16 @@ function sessionItemSelect(): void {
 
 <style lang="less">
 body {
-  // -webkit-app-region: drag;
   height: 100vh;
 }
+// 参考大佬的解决方案我们不再使用拖拽css
+// button {
+//   -webkit-app-region: no-drag;
+// }
 
-button {
-  -webkit-app-region: no-drag;
-}
+// .dragable {
+//   -webkit-app-region: drag;
+//   // todo 为什么这样会无效
+//   // cursor: move;
+// }
 </style>
