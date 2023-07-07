@@ -17,11 +17,13 @@ import {
   NPopconfirm,
   NCollapseTransition,
   NSpin,
-  useMessage
+  useMessage,
+  NIcon
 } from 'naive-ui'
 import { ref, onMounted, watch } from 'vue'
 import { SettingType, getDefaultSetting } from '@shared/config/SettingType'
-import { getChatAssistantIcon } from '@renderer/utils/IconUtils'
+import IconMain from '@renderer/components/icons/IconMain.vue'
+import GithubButton from 'vue-github-button'
 
 const settingStore = useSettingStore()
 const message = useMessage()
@@ -273,28 +275,71 @@ function gotoHash(id: string): void {
 
             <!-- 关于 -->
             <n-card id="about" title="关于（About）" style="min-height: 400px" class="align-middle">
-              <div class="grid grid-cols-6 place-items-center">
+              <div class="flex flex-col items-center">
                 <!-- 图标 -->
-                <div class="col-start-2 col-span-4">
-                  <img :src="getChatAssistantIcon()" />
+                <div class="p-2 bg-white rounded-lg" style="width: 48px; height: 48px">
+                  <n-icon size="48">
+                    <icon-main />
+                  </n-icon>
                 </div>
                 <!-- 简介 -->
-                <div class="col-start-2 col-span-4">
-                  <p></p>
+                <div>
+                  <p>TinyChat是一个AI对话应用由ChatGPT驱动</p>
+                </div>
+                <div class="flex gap-x-2">
+                  <!-- Place this tag where you want the button to render. -->
+                  <github-button
+                    href="https://github.com/TinyChatZ/tiny-chat-app"
+                    data-color-scheme="no-preference: light; light: light; dark: dark;"
+                    data-icon="octicon-star"
+                    data-size="large"
+                    data-show-count="true"
+                    aria-label="Star TinyChatZ/tiny-chat-app on GitHub"
+                    >Star</github-button
+                  >
+                  <!-- Place this tag where you want the button to render. -->
+                  <github-button
+                    href="https://github.com/TinyChatZ/tiny-chat-app/issues"
+                    data-color-scheme="no-preference: light; light: light; dark: dark;"
+                    data-icon="octicon-issue-opened"
+                    data-size="large"
+                    data-show-count="true"
+                    aria-label="Issue TinyChatZ/tiny-chat-app on GitHub"
+                    >Issue</github-button
+                  >
+                  <!-- Place this tag where you want the button to render. -->
+                  <github-button
+                    href="https://github.com/TinyChatZ/tiny-chat-app/releases"
+                    data-color-scheme="no-preference: light; light: light; dark: dark;"
+                    data-icon="octicon-download"
+                    data-size="large"
+                    aria-label="Download TinyChatZ/tiny-chat-app on GitHub"
+                    >Download</github-button
+                  >
+                  <!-- Place this tag where you want the button to render. -->
+                  <github-button
+                    href="https://github.com/Jakentop"
+                    data-color-scheme="no-preference: light; light: light; dark: dark;"
+                    data-size="large"
+                    data-show-count="true"
+                    aria-label="Follow @Jakentop on GitHub"
+                    >Follow @Jakentop</github-button
+                  >
                 </div>
                 <!-- 软件信息 -->
-                <div class="col-start-2 col-span-4 content-center">Name: {{ 'TinyChat' }}</div>
-                <div class="col-start-2 col-span-4">Version: {{ sysInfo.get('version') }}</div>
-                <div class="col-start-2 col-span-4">BuildDate: {{ sysInfo.get('buildDate') }}</div>
-                <div class="col-start-2 col-span-4 content-center">
-                  System: {{ sysInfo.get('systemVersion') }}
+                <div class="mt-10 flex gap-x-2">
+                  <div>Name: {{ 'TinyChat' }}</div>
+                  <div>Version: {{ sysInfo.get('version') }}</div>
                 </div>
-                <div class="col-start-2 col-span-4">Node: {{ sysInfo.get('nodeVersion') }}</div>
-                <div class="col-start-2 col-span-4">
-                  Electron: {{ sysInfo.get('electronVersion') }}
+                <!-- <div class="col-start-2 col-span-4">BuildDate: {{ sysInfo.get('buildDate') }}</div> -->
+                <div>System: {{ sysInfo.get('systemVersion') }}</div>
+                <div class="flex gap-x-2">
+                  <div>Node: {{ sysInfo.get('nodeVersion') }}</div>
+                  <div>Electron: {{ sysInfo.get('electronVersion') }}</div>
+                  <div>Chrome: {{ sysInfo.get('chromeVersion') }}</div>
                 </div>
-                <div class="col-start-2 col-span-4">Chrome: {{ sysInfo.get('chromeVersion') }}</div>
-
+              </div>
+              <div class="m-10 grid grid-cols-6 place-items-center">
                 <div class="col-start-2 col-span-4 flex gap-x-2">
                   开发者模式：<n-switch v-model:value="formValue.other.devMode" />
                 </div>

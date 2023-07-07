@@ -23,6 +23,8 @@ export interface ChatSessionStateType {
    * 外部监听该值的改变并刷新对应的ChatGPTStore
    */
   curChatSessionId?: string
+  /** 当前选中的对话session */
+  curChatSession?: ChatSessionIndexType
   /** 同步状态，true为已同步，false为未同步 */
   sync: boolean
   /** 最近更新时间 */
@@ -41,7 +43,6 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
     indexMap: new Map(),
     statusMap: new Map(),
     sync: false,
-    curChatSessionId: undefined,
     lastModify: new Date(),
     showItemEditBar: false
   }),
@@ -108,6 +109,7 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
         const chatgptStore = useChatgptStore(chatSessionItem.id)
         chatgptStore.chatList = chatSessionItem.chatList ?? []
         chatgptStore.refreshIndexMap()
+        this.curChatSession = chatSessionItem
         this.curChatSessionId = chatSessionItem?.id
       } else {
         console.error('载入的chatgptStore为空')
@@ -170,6 +172,7 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
         // todo 这里要报错
         if (i >= this.indexArray.length) return
         this.loadSession(this.indexArray[i - 1 >= 0 ? i - 1 : 0])
+        this.curChatSession = this.indexArray[i - 1 >= 0 ? i - 1 : 0]
         this.curChatSessionId = this.indexArray[i - 1 >= 0 ? i - 1 : 0].id
         await window.api.modifyChatSessionItem(Object.assign({}, item), 'delete')
       }

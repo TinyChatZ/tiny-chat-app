@@ -2135,6 +2135,11 @@ get-stream@^5.1.0:
   dependencies:
     pump "^3.0.0"
 
+github-buttons@^2.22.0:
+  version "2.27.0"
+  resolved "https://registry.npmmirror.com/github-buttons/-/github-buttons-2.27.0.tgz#bbebea3d1c4f8c302b7d8432fd25a679242597e2"
+  integrity sha512-PmfRMI2Rttg/2jDfKBeSl621sEznrsKF019SuoLdoNlO7qRUZaOyEI5Li4uW+79pVqnDtKfIEVuHTIJ5lgy64w==
+
 glob-parent@^5.1.2, glob-parent@~5.1.2:
   version "5.1.2"
   resolved "https://registry.npmmirror.com/glob-parent/-/glob-parent-5.1.2.tgz"
@@ -3714,6 +3719,13 @@ vue-eslint-parser@^9.0.0, vue-eslint-parser@^9.0.1:
     esquery "^1.4.0"
     lodash "^4.17.21"
     semver "^7.3.6"
+
+vue-github-button@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.npmmirror.com/vue-github-button/-/vue-github-button-3.1.0.tgz#a95751c43db68cb3ba790af1f63df7e3a2be6dae"
+  integrity sha512-S69NFalucetUW4AjMkLlHY/fgTWu6LEGEtehMewXRNLnjODhDvJj4lwt0u0BSPXLTDB+PLk1tWlwx3pw+ItLgQ==
+  dependencies:
+    github-buttons "^2.22.0"
 
 vue-markdown-render@^2.0.1:
   version "2.0.1"

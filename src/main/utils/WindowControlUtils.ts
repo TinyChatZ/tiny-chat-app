@@ -44,7 +44,6 @@ export class WindowMove {
       const curPos = screen.getCursorScreenPoint()
       const x = this.winPos[0] + curPos.x - this.mousePos.x
       const y = this.winPos[1] + curPos.y - this.mousePos.y
-      console.log(this.curSize)
       this.window.setBounds({
         width: this.curSize[0],
         height: this.curSize[1],

@@ -1,23 +1,18 @@
 <script setup lang="ts">
-import { NButton, NPopover, NScrollbar, NEl } from 'naive-ui'
+import { NPopover, NScrollbar, NEl, NIcon } from 'naive-ui'
 import { ref, watch } from 'vue'
 import MainChat from '@renderer/components/chat/MainChat.vue'
 import SessionList from '@renderer/components/session/SessionList.vue'
 import SessionToolbar from '@renderer/components/session/SessionToolbar.vue'
+import IconMain from '@renderer/components/icons/IconMain.vue'
 import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
 import { useSettingStore } from '@renderer/stores/SettingStore'
 
 const settingStore = useSettingStore()
 const chatSessionStore = useChatSessionStore()
-const win = ref(window)
 
 // 只要在顶层初始化一次即可
 chatSessionStore.initChatSession()
-
-// 是否显示dialog
-const showDialog = (): void => {
-  settingStore.showDialogState = !settingStore.showDialogState
-}
 
 // 处理透明度及鼠标事件
 const popoverStatus = ref()
@@ -48,8 +43,39 @@ watch(
     window.api.setIgnoreMouseEvent(isIgnoreMouseEvent)
   }
 )
+// 处理是否进行窗口移动
+function onMouseMoveEvent(event: MouseEvent, type: 'over' | 'out' | 'down' | 'up'): void {
+  if (type === 'over') {
+    // 仅当缩小状态且鼠标在mainIconDrag区域内，才会取消
+    if (
+      settingStore.showDialogState === false &&
+      (event.target as HTMLElement).id === 'mainIconDrag'
+    )
+      mouseEnterDrag.value = true
+    else mouseEnterDrag.value = false
+  } else if (type === 'out') {
+    mouseEnterDrag.value = false
+  } else if (type === 'down') {
+    window.api.windowMove(true, 'ChatWindow')
+  } else if (type === 'up') {
+    window.api.windowMove(false, 'ChatWindow')
+  }
+}
+
 function onPopoverStatusChange(status: boolean): void {
   popoverStatus.value = status
+}
+
+/**
+ * 切换是否展示整个窗口
+ * 单击模式下只允许从展开切换到缩放，不允许操作
+ * @param clickType
+ */
+function changeShowDialog(clickType: 'single' | 'double'): void {
+  if (clickType === 'double') settingStore.showDialogState = !settingStore.showDialogState
+  // else {
+  //   if (settingStore.showDialogState) settingStore.showDialogState = false
+  // }
 }
 
 // 点击某个session后缩回列表
@@ -62,41 +88,42 @@ function sessionItemSelect(): void {
 <template>
   <div class="flex flex-col h-full">
     <div
-      id="test"
-      class="flex"
-      @mouseover="mouseEnterDrag = true"
-      @mouseout="mouseEnterDrag = false"
-      @mousedown="win.api.windowMove(true, 'ChatWindow')"
-      @mouseup="win.api.windowMove(false, 'ChatWindow')"
+      class="flex content-center items-center cursor-move"
+      @mouseover="(e) => onMouseMoveEvent(e, 'over')"
+      @mouseout="(e) => onMouseMoveEvent(e, 'out')"
+      @mousedown="(e) => onMouseMoveEvent(e, 'down')"
+      @mouseup="(e) => onMouseMoveEvent(e, 'up')"
     >
       <n-el
-        class="p-3 content-center flex items-center"
+        id="mainIconDrag"
+        class="p-2 flex items-center rounded-full"
         tag="div"
         style="background-color: var(--body-color)"
       >
         <!-- 主要图标 -->
         <n-popover ref="popover" placement="bottom-start" :on-update-show="onPopoverStatusChange">
           <template #trigger>
-            <NButton size="large" circle @click="showDialog">
-              <img
-                draggable="false"
-                src="@renderer/assets/icons/icon-grey.png"
-                style="width: 100%; height: auto"
-              />
-            </NButton>
+            <div
+              class="rounded-full inline-block hover:cursor-pointer p-1"
+              style="width: 41px; height: 41px"
+              @click="changeShowDialog('single')"
+              @dblclick="changeShowDialog('double')"
+            >
+              <n-icon size="41">
+                <icon-main />
+              </n-icon>
+            </div>
           </template>
           <n-scrollbar style="max-height: 33vh">
             <session-list :select-item-hooks="sessionItemSelect" />
           </n-scrollbar>
           <SessionToolbar />
         </n-popover>
-        <div class="inline-block text-xl pl-2 select-none" style="line-height: 40px">TinyChat</div>
-
-        <!-- 配置界面，刷新和修改 -->
-        <!-- <n-collapse-transition class="ml-4" :show="showState">
-        <setting />
-      </n-collapse-transition> -->
       </n-el>
+      <!-- 标题 -->
+      <div v-show="settingStore.showDialogState" class="inline-block text-lg pl-2 select-none">
+        {{ chatSessionStore.curChatSession?.name ?? 'Default Session' }}
+      </div>
     </div>
 
     <div v-show="settingStore.showDialogState" style="height: 90%">

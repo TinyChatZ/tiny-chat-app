@@ -1,12 +1,15 @@
 <script lang="ts" setup>
 import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
+import { useSettingStore } from '@renderer/stores/SettingStore'
 import { ChatSessionIndexType } from '@shared/chat/ChatSessionType'
 import { NButton, NPopover, NIcon } from 'naive-ui'
 import ChatSessionAddIcon from '@renderer/components/icons/ChatSessionAddIcon.vue'
+import ChatSessionInOutIcon from '../icons/ChatSessionInOutIcon.vue'
 import ChatSessionEditIcon from '../icons/ChatSessionEditIcon.vue'
 import ChatSessionSettingsIcon from '../icons/ChatSessionSettingsIcon.vue'
 
 const chatSessiontStore = useChatSessionStore()
+const settingStore = useSettingStore()
 
 // props
 const props = defineProps<{
@@ -36,6 +39,11 @@ async function createNewSession(): Promise<void> {
 // 退出程序
 const eixtProgram = (): void => {
   window.api.exitProgram()
+}
+
+// 是否显示dialog
+const showDialog = (): void => {
+  settingStore.showDialogState = !settingStore.showDialogState
 }
 </script>
 <template>
@@ -71,6 +79,17 @@ const eixtProgram = (): void => {
         </n-button>
       </template>
       <span>配置</span>
+    </n-popover>
+
+    <n-popover>
+      <template #trigger>
+        <n-button text @click="showDialog">
+          <n-icon>
+            <chat-session-in-out-icon :status="settingStore.showDialogState ? 'in' : 'out'" />
+          </n-icon>
+        </n-button>
+      </template>
+      缩小/放大
     </n-popover>
 
     <n-button quaternary @click="eixtProgram">退出</n-button>
