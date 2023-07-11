@@ -2,6 +2,7 @@ import { ElectronAPI } from '@electron-toolkit/preload'
 import { type SettingType } from '../main/types/SettingType'
 import { ChatSessionIndexType, ChatSessionItemType } from '@shared/chat/ChatSessionType'
 import { IgnoreMouseEventsOptions } from 'electron'
+import { TinyResult } from '@shared/common/TinyResult'
 
 declare global {
   interface RpcResult<T> {
@@ -59,16 +60,19 @@ declare global {
       setIgnoreMouseEvent: (ignore: boolean) => void
 
       /** 是否让窗口跟着鼠标走；这是网上大佬教的鼠标拖拽方式😂 */
-      windowMove: (move: boolean, windowName: string) => void
+      windowMove: (move: 'move' | 'end' | 'heartBeat', windowName: string) => void
 
       /** 初始化chatSession */
-      initChatSessiontIndex: () => Promise<Map<string, ChatSessionIndexType>>
+      initChatSessiontIndex: () => Promise<TinyResult<Map<string, ChatSessionIndexType>>>
 
       /** 获取/创建一个chatSession详情 */
-      getChatSessionItem: (id?: string) => Promise<ChatSessionItemType>
+      getChatSessionItem: (id?: string) => Promise<TinyResult<ChatSessionItemType>>
 
       /** 修改/删除一个chatSession详情 */
-      modifyChatSessionItem: (item: ChatSessionIndexType, op: 'update' | 'delete') => Promise<void>
+      modifyChatSessionItem: (
+        item: ChatSessionItemType,
+        op: 'update' | 'delete'
+      ) => Promise<TinyResult<ChatSessionItemType>>
     }
     handler: {
       /**

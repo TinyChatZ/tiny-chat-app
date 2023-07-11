@@ -11,6 +11,8 @@ import path from 'path'
 import fs from 'fs/promises'
 import { WindowsManageUtils } from '../utils/WindowManageUtils'
 import { EventNames } from '@shared/common/EventNames'
+import { TinyResult, TinyResultBuilder } from '@shared/common/TinyResult'
+import { StatusCode } from '@shared/common/StatusCode'
 
 /** 获取保存的路径位置 */
 const configDirPath = path.parse(getConfigPath()).dir
@@ -25,20 +27,22 @@ const cacheDetailMap: Map<string, ChatSessionItemType> = new Map()
 let initFlag = false
 
 /** 获取索引Map */
-export async function getIndexMap(): Promise<Map<string, ChatSessionIndexType>> {
+export async function getIndexMap(): Promise<TinyResult<Map<string, ChatSessionIndexType>>> {
   if (!initFlag) {
     try {
       const data = await fs.readFile(cachePath.index)
       cacheIndexMap = new Map(Object.entries(JSON.parse(data.toString())))
-      return cacheIndexMap
     } catch (e) {
       // 如果直接读取失败，就创建索引
-      await syncStorage({ type: 'index' })
+      const syncRes = await syncStorage({ type: 'index' })
+      cacheIndexMap = new Map()
+      if (!syncRes.success)
+        return TinyResultBuilder.buildDataWithException(StatusCode.E20008, cacheIndexMap)
     }
     initFlag = true
-    return new Map()
+    return TinyResultBuilder.buildSuccess(cacheIndexMap)
   } else {
-    return cacheIndexMap
+    return TinyResultBuilder.buildSuccess(cacheIndexMap)
   }
 }
 
@@ -115,40 +119,45 @@ async function syncStorage(options: {
   type: 'index' | 'detail'
   item?: ChatSessionItemType
   op?: 'create' | 'update' | 'delete'
-}): Promise<void> {
+}): Promise<TinyResult<undefined>> {
+  // // 广播更新事件
+  // WindowsManageUtils.getAll().forEach((window) =>
+  //   window.content.webContents.send(EventNames.ChatSession_Brocast_SessionUpdate, {
+  //     index: cacheIndexMap,
+  //     detail: cacheDetailMap
+  //   })
+  // )
+
   // 文件夹不在则创建
   try {
     await fs.access(cachePath.dir)
   } catch {
     await fs.mkdir(cachePath.dir, { recursive: true })
   }
-  // 刷新索引
-  if (options.type === 'index') {
-    await fs.writeFile(cachePath.index, JSON.stringify(Object.fromEntries(cacheIndexMap)))
-  }
-  // 刷新详情
-  else if (options.type === 'detail') {
-    switch (options?.op) {
-      case 'create':
-      case 'update':
-        await fs.writeFile(
-          path.join(cachePath.dir, `${options?.item?.id ?? 'none'}.json`),
-          JSON.stringify(options?.item)
-        )
-        break
-      case 'delete':
-        await fs.unlink(path.join(cachePath.dir, `${options?.item?.id ?? 'none'}.json`))
-        break
-      default:
-        console.error('op is not except')
-        throw 'op is not except'
+  try {
+    // 刷新索引
+    if (options.type === 'index') {
+      await fs.writeFile(cachePath.index, JSON.stringify(Object.fromEntries(cacheIndexMap)))
     }
+
+    // 刷新详情
+    else if (options.type === 'detail') {
+      switch (options?.op) {
+        case 'create':
+        case 'update':
+          await fs.writeFile(
+            path.join(cachePath.dir, `${options?.item?.id ?? 'none'}.json`),
+            JSON.stringify(options?.item)
+          )
+          return TinyResultBuilder.buildSuccess()
+        case 'delete':
+          await fs.unlink(path.join(cachePath.dir, `${options?.item?.id ?? 'none'}.json`))
+          return TinyResultBuilder.buildSuccess()
+      }
+    }
+  } catch (e) {
+    console.error('数据同步错误', e)
+    return TinyResultBuilder.buildException(StatusCode.E20007, e)
   }
-  // 广播更新事件
-  WindowsManageUtils.getAll().forEach((window) =>
-    window.content.webContents.send(EventNames.ChatSession_Brocast_SessionUpdate, {
-      index: cacheIndexMap,
-      detail: cacheDetailMap
-    })
-  )
+  return TinyResultBuilder.buildException(StatusCode.E20007)
 }

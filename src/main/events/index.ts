@@ -9,6 +9,8 @@ import * as ChatSessionService from '../services/ChatSessionService'
 import * as fontList from 'font-list'
 import { ChatSessionIndexType } from '@shared/chat/ChatSessionType'
 import { WindowMove } from '../utils/WindowControlUtils'
+import { TinyResultBuilder } from '@shared/common/TinyResult'
+import { StatusCode } from '@shared/common/StatusCode'
 export default function registerEvent(): void {
   // Public
 
@@ -96,13 +98,18 @@ export default function registerEvent(): void {
     win?.setIgnoreMouseEvents(ignore, { forward: true })
   })
 
-  ipcMain.on('common:windowMove', (_event, move: boolean, windowId: string) => {
-    const window = WindowsManageUtils.getByName(windowId)
-    if (window) {
-      const windowMove = WindowMove.getInstance(window)
-      move ? windowMove.startMove() : windowMove.endMove()
+  ipcMain.on(
+    'common:windowMove',
+    (_event, move: 'move' | 'end' | 'heartBeat', windowId: string) => {
+      const window = WindowsManageUtils.getByName(windowId)
+      if (window) {
+        const windowMove = WindowMove.getInstance(window)
+        if (move === 'move') windowMove.startMove()
+        else if (move === 'end') windowMove.endMove()
+        else if (move === 'heartBeat') windowMove.heartBeat()
+      }
     }
-  })
+  )
 
   /**
    * 初始化chatSessionIndex
@@ -117,19 +124,29 @@ export default function registerEvent(): void {
    * 创建或者加载一个SessionIndex
    */
   ipcMain.handle('chatsession:getChatSessionItem', async (_event, id?: string) => {
-    if (id) {
-      return await ChatSessionService.getChatSessionItem(id)
-    } else {
-      const id = await ChatSessionService.saveIndexItem()
-      return await ChatSessionService.getChatSessionItem(id)
+    if (!id) {
+      id = await ChatSessionService.saveIndexItem()
     }
+    const result = await ChatSessionService.getChatSessionItem(id)
+    if (result) return TinyResultBuilder.buildSuccess(result)
+    else return TinyResultBuilder.buildException(StatusCode.E20002)
   })
   /** 修改/删除一个chatSession详情 */
   ipcMain.handle(
     'chatsession:modifyChatSessionItem',
     async (_event, item: ChatSessionIndexType, op: 'update' | 'delete') => {
-      if (op === 'delete') ChatSessionService.dropChatSessionItem(item.id)
-      else if (op === 'update') ChatSessionService.saveIndexItem(item)
+      if (op === 'delete') {
+        const result = await ChatSessionService.dropChatSessionItem(item.id)
+        if (result) {
+          return TinyResultBuilder.buildSuccess(item)
+        } else return TinyResultBuilder.buildException(StatusCode.E20004)
+      } else if (op === 'update') {
+        const result = await ChatSessionService.saveIndexItem(item)
+        if (result === '-1') return TinyResultBuilder.buildException(StatusCode.E20004)
+      } else {
+        return TinyResultBuilder.buildException(StatusCode.E20005)
+      }
+      return TinyResultBuilder.buildSuccess()
     }
   )
 }

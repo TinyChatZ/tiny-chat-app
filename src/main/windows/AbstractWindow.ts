@@ -44,6 +44,10 @@ export abstract class AbstractWindow {
     this.content = this.createWindow()
     this.identity = options?.identity ?? this.constructor.name
     WindowsManageUtils.addOne(this)
+    // 添加注销钩子
+    this.content.on('close', () => {
+      WindowsManageUtils.removeOne(this.identity)
+    })
   }
 
   /**

@@ -4,6 +4,7 @@ import { RpcResult } from '../main/utils/RpcUtils'
 import { type SettingType } from '@shared/config/SettingType'
 import { ChatSessionIndexType, ChatSessionItemType } from '@shared/chat/ChatSessionType'
 import { EventNames } from '@shared/common/EventNames'
+import { TinyResult } from '@shared/common/TinyResult'
 
 // Custom APIs for renderer
 const api = {
@@ -29,7 +30,7 @@ const api = {
     ipcRenderer.invoke('set:getSysFontFamilies'),
 
   /** 是否让窗口跟着鼠标走；这是网上大佬教的鼠标拖拽方式😂 */
-  windowMove: (move: boolean, windowName: string): void => {
+  windowMove: (move: 'move' | 'end' | 'heartBeat', windowName: string): void => {
     ipcRenderer.send('common:windowMove', move, windowName)
   },
 
@@ -39,15 +40,18 @@ const api = {
   },
 
   /** 初始化chatSession */
-  initChatSessiontIndex: async (): Promise<Map<string, ChatSessionIndexType>> =>
+  initChatSessiontIndex: async (): Promise<TinyResult<Map<string, ChatSessionIndexType>>> =>
     ipcRenderer.invoke('chatsession:initChatSessionIndex'),
 
   /** 获取一个chatSession详情 */
-  getChatSessionItem: async (id?: string): Promise<ChatSessionItemType> =>
+  getChatSessionItem: async (id?: string): Promise<TinyResult<ChatSessionItemType>> =>
     await ipcRenderer.invoke('chatsession:getChatSessionItem', id),
 
   /** 修改/删除一个chatSession详情 */
-  modifyChatSessionItem: (item: ChatSessionIndexType, op: 'update' | 'delete'): Promise<void> =>
+  modifyChatSessionItem: (
+    item: ChatSessionItemType,
+    op: 'update' | 'delete'
+  ): Promise<TinyResult<ChatSessionItemType>> =>
     ipcRenderer.invoke('chatsession:modifyChatSessionItem', item, op)
 }
 

@@ -29,6 +29,8 @@ interface SettingChatgptType {
     address: string
     /** 代理服务token */
     param: string
+    /** 是否在请求是使用代理 */
+    useProxy: boolean
   }
   /** 会话管理 */
   session: {
@@ -102,7 +104,8 @@ const getDefaultSetting = (): SettingType => ({
     },
     proxy: {
       address: '',
-      param: ''
+      param: '',
+      useProxy: false
     },
     session: {
       savePath: '',

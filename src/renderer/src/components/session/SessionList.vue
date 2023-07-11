@@ -86,9 +86,9 @@ function checkoutSession(item: ChatSessionIndexType): void {
               <n-popover>
                 <template #trigger>
                   <n-button
-                    :quaternary="!(item.id === chatSessiontStore.curChatSessionId)"
-                    :secondary="item.id === chatSessiontStore.curChatSessionId"
-                    :type="item.id === chatSessiontStore.curChatSessionId ? 'primary' : undefined"
+                    :quaternary="!(item.id === chatSessiontStore.curChatSession?.id)"
+                    :secondary="item.id === chatSessiontStore.curChatSession?.id"
+                    :type="item.id === chatSessiontStore.curChatSession?.id ? 'primary' : undefined"
                     @click="checkoutSession(item)"
                   >
                     <!-- TODO 这里要做一个媒体查询 -->

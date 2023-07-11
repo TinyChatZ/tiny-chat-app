@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NPopover, NScrollbar, NEl, NIcon } from 'naive-ui'
+import { NPopover, NScrollbar, NEl, NIcon, NEllipsis, useMessage } from 'naive-ui'
 import { ref, watch } from 'vue'
 import MainChat from '@renderer/components/chat/MainChat.vue'
 import SessionList from '@renderer/components/session/SessionList.vue'
@@ -7,12 +7,14 @@ import SessionToolbar from '@renderer/components/session/SessionToolbar.vue'
 import IconMain from '@renderer/components/icons/IconMain.vue'
 import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
 import { useSettingStore } from '@renderer/stores/SettingStore'
+import { TinyResultUiMessageHandler, TinyResultUtils } from '@renderer/utils/TinyResultUtils'
 
 const settingStore = useSettingStore()
 const chatSessionStore = useChatSessionStore()
 
-// 只要在顶层初始化一次即可
-chatSessionStore.initChatSession()
+// 设置全局默认异常处理为naive-ui
+const defaultHandler = new TinyResultUiMessageHandler(useMessage())
+TinyResultUtils.defaultHandler = defaultHandler
 
 // 处理透明度及鼠标事件
 const popoverStatus = ref()
@@ -44,7 +46,9 @@ watch(
   }
 )
 // 处理是否进行窗口移动
+const mouseMoveStatus = ref('')
 function onMouseMoveEvent(event: MouseEvent, type: 'over' | 'out' | 'down' | 'up'): void {
+  mouseMoveStatus.value = type
   if (type === 'over') {
     // 仅当缩小状态且鼠标在mainIconDrag区域内，才会取消
     if (
@@ -56,9 +60,17 @@ function onMouseMoveEvent(event: MouseEvent, type: 'over' | 'out' | 'down' | 'up
   } else if (type === 'out') {
     mouseEnterDrag.value = false
   } else if (type === 'down') {
-    window.api.windowMove(true, 'ChatWindow')
+    window.api.windowMove('move', 'ChatWindow')
+    // 发送心跳
+    const heartBeatInterval = setInterval(() => {
+      console.log(mouseMoveStatus.value)
+      window.api.windowMove('heartBeat', 'ChatWindow')
+      if (mouseMoveStatus.value === 'out' || mouseMoveStatus.value === 'up') {
+        clearInterval(heartBeatInterval)
+      }
+    }, 300)
   } else if (type === 'up') {
-    window.api.windowMove(false, 'ChatWindow')
+    window.api.windowMove('end', 'ChatWindow')
   }
 }
 
@@ -121,8 +133,17 @@ function sessionItemSelect(): void {
         </n-popover>
       </n-el>
       <!-- 标题 -->
-      <div v-show="settingStore.showDialogState" class="inline-block text-lg pl-2 select-none">
-        {{ chatSessionStore.curChatSession?.name ?? 'Default Session' }}
+      <div v-show="settingStore.showDialogState" class="inline-block pt-1 pl-2 pr-6 select-none">
+        <n-ellipsis
+          :tooltip="{ width: 300 }"
+          :line-clamp="1"
+          :class="{
+            'text-2xl': (chatSessionStore.curChatSession?.name.length ?? 1) < 11,
+            'text-lg': (chatSessionStore.curChatSession?.name.length ?? 1) >= 11
+          }"
+        >
+          {{ chatSessionStore.curChatSession?.name ?? 'Default Session' }}
+        </n-ellipsis>
       </div>
     </div>
 

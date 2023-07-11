@@ -30,7 +30,7 @@ const action = ref({
   drop() {
     try {
       // 每次删除都要计算当前激活的chatgptStore
-      const chatgptStore = useChatgptStore(chatSession.curChatSessionId)
+      const chatgptStore = useChatgptStore(chatSession.curChatSession?.id)
       chatgptStore.dropChatListItem(props.item.id)
     } catch (e) {
       console.log(e)

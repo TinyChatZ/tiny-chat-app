@@ -1,14 +1,18 @@
-import { ChatSessionIndexType, ChatSessionItemType } from '@shared/chat/ChatSessionType'
+import {
+  ChatSessionIndexType,
+  ChatSessionItemType,
+  getChatSessionIndexByItem
+} from '@shared/chat/ChatSessionType'
 import { ChatItem } from '@shared/chat/ChatType'
-import { StatusCode } from '@shared/common/StatusCode'
-import { TinyResult, TinyResultBuilder } from '@shared/common/TinyResult'
+import { TinyResultUtils } from '@renderer/utils/TinyResultUtils'
 import { defineStore } from 'pinia'
 import { useChatgptStore } from './ChatgptStore'
+import { useMessage } from 'naive-ui'
 
 // 渲染层维护一个独立的ChatSessionStatus用来表示当前状态
 export interface ChatSessionStatusType {
   /** 该条记录的状态 */
-  status: 'sync' | 'unsync' | 'error' | 'unknown'
+  status: 'sync' | 'unsync' | 'error' | 'generateTitle' | 'unknown'
   /** 加载时间 */
   loadTime: Date
 }
@@ -19,12 +23,8 @@ export interface ChatSessionStateType {
   indexMap: Map<string, ChatSessionIndexType>
   /** 当前Store中所有session Item和Index的状态 */
   statusMap: Map<string, ChatSessionStatusType>
-  /** 当前对话的Id
-   * 外部监听该值的改变并刷新对应的ChatGPTStore
-   */
-  curChatSessionId?: string
   /** 当前选中的对话session */
-  curChatSession?: ChatSessionIndexType
+  curChatSessionId?: string
   /** 同步状态，true为已同步，false为未同步 */
   sync: boolean
   /** 最近更新时间 */
@@ -42,6 +42,7 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
     sessions: new Map(),
     indexMap: new Map(),
     statusMap: new Map(),
+    curChatSessionId: undefined,
     sync: false,
     lastModify: new Date(),
     showItemEditBar: false
@@ -61,6 +62,14 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
         })
       }
       return res
+    },
+    /**
+     *
+     * @returns 当前选中的sessionItem
+     */
+    curChatSession(): ChatSessionItemType | undefined {
+      if (this.curChatSessionId) return this.sessions.get(this.curChatSessionId)
+      else return undefined
     }
   },
   actions: {
@@ -69,10 +78,14 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
      *
      */
     async initChatSession(): Promise<string | void> {
-      this.indexMap = await window.api.initChatSessiontIndex()
+      this.indexMap = TinyResultUtils.getData(
+        await window.api.initChatSessiontIndex(),
+        () => new Map()
+      )
       // 如果没有会话则创建一个
       if (this.indexMap.size <= 0) {
-        this.loadSession(await this.createNewSession())
+        const newSession = await this.createNewSession()
+        newSession && (await this.loadSession(newSession))
       }
       this.statusMap = new Map()
       for (const item of this.indexMap.keys()) {
@@ -87,8 +100,12 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
      * 创建一个新的会话
      * @returns
      */
-    async createNewSession(): Promise<ChatSessionItemType> {
-      const chatSession = await window.api.getChatSessionItem()
+    async createNewSession(): Promise<ChatSessionItemType | undefined> {
+      const chatSession = TinyResultUtils.getDataUndefined(await window.api.getChatSessionItem())
+      if (chatSession) {
+        this.sessions.set(chatSession.id, chatSession)
+        this.indexMap.set(chatSession.id, getChatSessionIndexByItem(chatSession))
+      }
       return chatSession
     },
     /**
@@ -101,16 +118,20 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
       if (this.sessions.get(index.id)) {
         chatSessionItem = this.sessions.get(index.id)
       } else {
-        chatSessionItem = await window.api.getChatSessionItem(index.id)
-        if (chatSessionItem) this.sessions.set(chatSessionItem.id, chatSessionItem)
+        const result = TinyResultUtils.getDataUndefined(
+          await window.api.getChatSessionItem(index.id)
+        )
+        if (result) {
+          chatSessionItem = result
+          this.sessions.set(chatSessionItem.id, chatSessionItem)
+        }
       }
       // 创建ChatGPT Store并写入数据
       if (chatSessionItem) {
         const chatgptStore = useChatgptStore(chatSessionItem.id)
         chatgptStore.chatList = chatSessionItem.chatList ?? []
         chatgptStore.refreshIndexMap()
-        this.curChatSession = chatSessionItem
-        this.curChatSessionId = chatSessionItem?.id
+        this.curChatSessionId = chatSessionItem.id
       } else {
         console.error('载入的chatgptStore为空')
       }
@@ -127,8 +148,7 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
     async syncSessionInfo(
       item: string | ChatSessionIndexType | ChatSessionItemType,
       chatList?: Array<ChatItem>
-    ): Promise<TinyResult<ChatSessionItemType | undefined>> {
-      console.log(item)
+    ): Promise<ChatSessionItemType | undefined> {
       // 三种方式获取session
       let session: ChatSessionItemType | undefined
       if (typeof item === 'string') {
@@ -146,11 +166,16 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
         }
         session = Object.assign({}, session)
         session.chatList = session.chatList?.map((item) => Object.assign({}, item))
-        await window.api.modifyChatSessionItem(Object.assign({}, session), 'update')
-        return TinyResultBuilder.buildSuccess(session)
-      } else {
-        return TinyResultBuilder.buildException(StatusCode.E20001)
+        const result = TinyResultUtils.getDataUndefined(
+          await window.api.modifyChatSessionItem(Object.assign({}, session), 'update')
+        )
+        if (result) {
+          this.sessions.set(result.id, session)
+          this.indexMap.set(result.id, getChatSessionIndexByItem(session))
+          return session
+        }
       }
+      return undefined
     },
     /**
      * 删除一条记录
@@ -160,8 +185,15 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
       /** 只有一个的时候直接删除并新建一个 */
       if (this.indexArray.length === 1) {
         const r = Object.assign({}, this.indexArray[0])
-        await window.api.modifyChatSessionItem(r, 'delete')
-        await this.loadSession(await this.createNewSession())
+        const result = TinyResultUtils.getDataUndefined(
+          await window.api.modifyChatSessionItem(r, 'delete')
+        )
+        if (result) {
+          this.sessions.set(result.id, result)
+          this.indexMap.set(result.id, getChatSessionIndexByItem(result))
+          const newSession = await this.createNewSession()
+          newSession && (await this.loadSession(newSession))
+        }
       }
       // 其余情况定位到删除位置，然后处理
       else {
@@ -170,11 +202,16 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
           if (this.indexArray[i].id === item.id) break
         }
         // todo 这里要报错
-        if (i >= this.indexArray.length) return
+        if (i >= this.indexArray.length) {
+          useMessage().error('下标越界了……')
+        }
         this.loadSession(this.indexArray[i - 1 >= 0 ? i - 1 : 0])
-        this.curChatSession = this.indexArray[i - 1 >= 0 ? i - 1 : 0]
-        this.curChatSessionId = this.indexArray[i - 1 >= 0 ? i - 1 : 0].id
-        await window.api.modifyChatSessionItem(Object.assign({}, item), 'delete')
+        const result = await window.api.modifyChatSessionItem(Object.assign({}, item), 'delete')
+        if (!result.success) {
+          useMessage().error(result.code)
+        } else {
+          this.curChatSessionId = this.indexArray[i - 1 >= 0 ? i - 1 : 0].id
+        }
       }
     }
   }
@@ -185,6 +222,7 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
  * todo 这里最好优化成增量
  */
 window.handler.updateChatSessionState((_e, value) => {
+  console.log(`接收到主进程的缓存刷新事件:${JSON.stringify(value)}`)
   const chatSession = useChatSessionStore()
   chatSession.indexMap = value.index
   chatSession.sessions = value.detail

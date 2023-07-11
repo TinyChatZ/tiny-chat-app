@@ -36,8 +36,6 @@ const loading = ref(true)
 // 是否显示代理
 const showProxy = ref(false)
 onMounted(async () => {
-  const res = await settingStore.initSettingParams()
-  if (!res.success) message.error('无法加载配置')
   formValue.value = settingStore.cloneNewSetting()
   showProxy.value =
     formValue.value.chatgpt.proxy && formValue.value.chatgpt.proxy.address ? true : false
@@ -222,9 +220,9 @@ function gotoHash(id: string): void {
                   </n-form-item>
                 </n-collapse-transition>
                 <n-form-item label="代理:是否使用代理模式">
-                  <n-switch v-model:value="showProxy" />
+                  <n-switch v-model:value="formValue.chatgpt.proxy.useProxy" />
                 </n-form-item>
-                <n-collapse-transition :show="showProxy">
+                <n-collapse-transition :show="formValue.chatgpt.proxy.useProxy">
                   <n-form-item label="代理地址"
                     ><n-input
                       v-model:value="formValue.chatgpt.proxy.address"

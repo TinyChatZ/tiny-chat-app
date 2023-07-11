@@ -41,10 +41,11 @@ watch(
   },
   { immediate: true }
 )
+
+// 处理data绑定到视图中
 const data = computed(() => ({
   ...mapWritableState(chatgptStoreFactory(chatSessionStore.curChatSessionId), ['chatList'])
 }))
-
 // 聊天记录scrollbar
 const scrollbar = ref<VNodeRef>('')
 
@@ -59,7 +60,15 @@ const sendData = async (): Promise<void> => {
     setTimeout(() => scrollbar.value.scrollBy({ top: 300 }), 100)
   })
   loading.value = false
-  if (!res.success) {
+  if (res.success) {
+    if (chatSessionStore.curChatSession && !chatSessionStore.curChatSession.nameGenerate) {
+      // 刷新对话标题
+      chatSessionStore.curChatSession.name = await chatgptStore.getChatListRefining()
+      chatSessionStore.curChatSession.nameGenerate = true
+      const res = await chatSessionStore.syncSessionInfo(chatSessionStore.curChatSession)
+      if (!res.success) message.error(res.message ?? '数据保存异常')
+    }
+  } else {
     message.error(res.message || '调用未知异常')
   }
 }

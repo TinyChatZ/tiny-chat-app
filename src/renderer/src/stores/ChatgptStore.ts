@@ -15,7 +15,6 @@ export interface ChatgptStoreState {
   innerPositionMap: Map<number, number>
   innerPositionCount: number
 }
-const settingStore = useSettingStore()
 
 /**
  * 创建多个ChatSessionStore
@@ -34,14 +33,20 @@ export const chatgptStoreFactory = (id?: string) =>
       innerPositionCount: 0
     }),
     getters: {
+      /**
+       * 获取请求参数
+       * @returns
+       */
       getRequestParam(): { url: string; options: EventSourceOptions } {
         // 不会重复创建 https://pinia.vuejs.org/zh/cookbook/composing-stores.html#shared-getters
-        const setting = settingStore.chatgpt
+        const setting = useSettingStore().chatgpt
         // 如果拿不到token就配置
         if (!setting?.token) {
           throw new Error('token is not exists')
         }
-        const url = (setting.proxy?.address || 'https://api.openai.com') + '/v1/chat/completions'
+        const url =
+          ((setting.proxy.useProxy && setting.proxy?.address) || 'https://api.openai.com') +
+          '/v1/chat/completions'
         const headers = {
           'Content-Type': 'application/json',
           Authorization: 'Bearer ' + setting.token
@@ -49,17 +54,27 @@ export const chatgptStoreFactory = (id?: string) =>
         if (setting.proxy?.param) {
           headers['token'] = setting.proxy.param
         }
-        const reqData = {
+        return { url, options: { method: 'POST', headers: headers, body: undefined } }
+      },
+      /**
+       * 获取请求的Body
+       */
+      getRequestBody(): {
+        model: string
+        stream: boolean
+        messages: { role: string; content: string }[]
+      } {
+        return {
           model: 'gpt-3.5-turbo',
           stream: true,
           messages: this.getLimitsData.map((item) => ({ role: item.role, content: item.content }))
         }
-        return { url, options: { method: 'POST', headers: headers, body: reqData } }
       },
       /**
        * 计算请求限制策略执行后的数据
        */
       getLimitsData(): Array<ChatItem> {
+        const settingStore = useSettingStore()
         const calculateType = settingStore.chatgpt.options.limitsCalculate
         const limitsBehavior = settingStore.chatgpt.options.limitsBehavior
         const limits = settingStore.chatgpt.options.limitsLength
@@ -177,11 +192,12 @@ export const chatgptStoreFactory = (id?: string) =>
         refreshHook?: () => void
       ): Promise<TinyResult<void>> {
         this.createUserInfo(question)
-        const gptSetting = settingStore.chatgpt
+        const gptSetting = useSettingStore().chatgpt
         if (!gptSetting?.token) {
           return TinyResultBuilder.buildException(StatusCode.E20001)
         }
         const { url, options } = this.getRequestParam
+        options.body = this.getRequestBody
         const position = this.createChatListItem('assistant')
         // 发起EventSource调用
         try {
@@ -210,6 +226,31 @@ export const chatgptStoreFactory = (id?: string) =>
           this.id && (await chatSessionStore.syncSessionInfo(this.id, this.chatList))
         }
         return TinyResultBuilder.buildSuccess()
+      },
+      /** 获取当前ChatList的总结信息，用于自动标题生成 */
+      async getChatListRefining(): Promise<string> {
+        const { url, options } = this.getRequestParam
+        const body = this.getRequestBody
+        body.messages.map((item) => ({
+          role: item.role,
+          content: item.content
+        }))
+        body.messages.unshift({
+          role: 'system',
+          content:
+            'I need you to play a dialogue title generation role, you should distill the meaning of the dialogue as simple as possible and generate a reasonable title, the length of the title is less than 20 words'
+        })
+        options.body = body
+        const res = await getEventSource<{
+          choices: Array<{ delta: { role?: string; content?: string } }>
+        }>(url, options)
+        let title = ''
+        for (const item of res.data) {
+          if (typeof item.data != 'string' && item.data?.choices[0].delta?.content) {
+            title += item.data?.choices[0].delta?.content
+          }
+        }
+        return title
       },
       /**
        * 获取真实的索引

@@ -9,7 +9,9 @@ export class WindowMove {
   mousePos: Point
   window: BrowserWindow
   timeout = 10
+  delay = 500
   curSize = [0, 0]
+  private curTimestamp = new Date().getMilliseconds()
   static windowMoveMap = new Map<AbstractWindow, WindowMove>()
 
   constructor(absWindow: AbstractWindow, timeout?: number) {
@@ -41,6 +43,10 @@ export class WindowMove {
     this.curSize = this.window.getSize()
     clearInterval(this.interval)
     this.interval = setInterval(() => {
+      if (new Date().getMilliseconds() - this.curTimestamp >= this.delay) {
+        clearInterval(this.interval)
+        return
+      }
       const curPos = screen.getCursorScreenPoint()
       const x = this.winPos[0] + curPos.x - this.mousePos.x
       const y = this.winPos[1] + curPos.y - this.mousePos.y
@@ -52,8 +58,19 @@ export class WindowMove {
       })
     }, this.timeout)
   }
-
+  /**
+   * 结束移动
+   */
   endMove(): void {
     clearInterval(this.interval)
+    this.interval = undefined
+  }
+  /**
+   * 发送心跳
+   * 移动时需要至少在delay期间内调用一次heartBeat否则移动停止
+   */
+  heartBeat(): void {
+    console.log('heartBeat')
+    this.curTimestamp = new Date().getMilliseconds()
   }
 }
