@@ -5,6 +5,7 @@ import { ChatItem } from '@shared/chat/ChatType'
 import { TinyResult, TinyResultBuilder } from '@shared/common/TinyResult'
 import { StatusCode } from '@shared/common/StatusCode'
 import { useChatSessionStore } from './ChatSessionStore'
+import { useMessage } from 'naive-ui'
 /**
  * ChatgptStoreState类型
  */
@@ -229,6 +230,12 @@ export const chatgptStoreFactory = (id?: string) =>
       },
       /** 获取当前ChatList的总结信息，用于自动标题生成 */
       async getChatListRefining(): Promise<string> {
+        const settingStore = useSettingStore()
+        if (!settingStore.chatgpt.prompts.generateTitle) {
+          const message = useMessage()
+          message.error('需配置标题生成的prompts')
+          throw '请配置标题生成的prompts'
+        }
         const { url, options } = this.getRequestParam
         const body = this.getRequestBody
         body.messages.map((item) => ({
@@ -237,8 +244,7 @@ export const chatgptStoreFactory = (id?: string) =>
         }))
         body.messages.unshift({
           role: 'system',
-          content:
-            'I need you to play a dialogue title generation role, you should distill the meaning of the dialogue as simple as possible and generate a reasonable title, the length of the title is less than 20 words'
+          content: settingStore.chatgpt.prompts.generateTitle
         })
         options.body = body
         const res = await getEventSource<{
@@ -249,6 +255,10 @@ export const chatgptStoreFactory = (id?: string) =>
           if (typeof item.data != 'string' && item.data?.choices[0].delta?.content) {
             title += item.data?.choices[0].delta?.content
           }
+        }
+        if (title.length > 50) {
+          console.warn(`发生标题缩减原始结果为：${title}`)
+          title = title.substring(0, 50)
         }
         return title
       },

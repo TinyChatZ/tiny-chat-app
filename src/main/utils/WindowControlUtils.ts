@@ -70,7 +70,6 @@ export class WindowMove {
    * 移动时需要至少在delay期间内调用一次heartBeat否则移动停止
    */
   heartBeat(): void {
-    console.log('heartBeat')
     this.curTimestamp = new Date().getMilliseconds()
   }
 }

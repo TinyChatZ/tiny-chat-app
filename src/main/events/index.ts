@@ -7,7 +7,7 @@ import * as SetService from '../services/SetService'
 import { WindowsManageUtils } from '../utils/WindowManageUtils'
 import * as ChatSessionService from '../services/ChatSessionService'
 import * as fontList from 'font-list'
-import { ChatSessionIndexType } from '@shared/chat/ChatSessionType'
+import { ChatSessionItemType } from '@shared/chat/ChatSessionType'
 import { WindowMove } from '../utils/WindowControlUtils'
 import { TinyResultBuilder } from '@shared/common/TinyResult'
 import { StatusCode } from '@shared/common/StatusCode'
@@ -49,9 +49,12 @@ export default function registerEvent(): void {
     const webContents = event.sender
     const win = BrowserWindow.fromWebContents(webContents)
     if (flag) {
-      const setParam = SetService.getCacheSettingParams()
-      win?.setSize(setParam.general.windowSize.width, setParam.general.windowSize.height, true)
-    } else win?.setSize(150, 64, true)
+      // const setParam = SetService.getCacheSettingParams()
+      // win?.setSize(setParam.general.windowSize.width, setParam.general.windowSize.height, true)
+      win?.setSkipTaskbar(true)
+    } else {
+      win?.setSkipTaskbar(false)
+    }
   })
 
   /**
@@ -129,12 +132,12 @@ export default function registerEvent(): void {
     }
     const result = await ChatSessionService.getChatSessionItem(id)
     if (result) return TinyResultBuilder.buildSuccess(result)
-    else return TinyResultBuilder.buildException(StatusCode.E20002)
+    else return TinyResultBuilder.buildException(StatusCode.E20006)
   })
   /** 修改/删除一个chatSession详情 */
   ipcMain.handle(
     'chatsession:modifyChatSessionItem',
-    async (_event, item: ChatSessionIndexType, op: 'update' | 'delete') => {
+    async (_event, item: ChatSessionItemType, op: 'update' | 'delete') => {
       if (op === 'delete') {
         const result = await ChatSessionService.dropChatSessionItem(item.id)
         if (result) {
@@ -146,7 +149,7 @@ export default function registerEvent(): void {
       } else {
         return TinyResultBuilder.buildException(StatusCode.E20005)
       }
-      return TinyResultBuilder.buildSuccess()
+      return TinyResultBuilder.buildSuccess(item)
     }
   )
 }

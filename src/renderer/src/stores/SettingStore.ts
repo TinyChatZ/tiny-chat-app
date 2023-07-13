@@ -6,12 +6,24 @@ import { useMessage } from 'naive-ui'
 export interface RuntimeSettingParams {
   /** 是否展示完整对话界面 */
   showDialogState: boolean
+  runtime: {
+    systemInfo: Map<string, string>
+  }
+}
+
+function getDefaultRunTimeSettingParam(): RuntimeSettingParams {
+  return {
+    showDialogState: true,
+    runtime: {
+      systemInfo: new Map()
+    }
+  }
 }
 
 const useSettingStore = defineStore('setting', {
   state: (): SettingType & RuntimeSettingParams => ({
     ...getDefaultSetting(),
-    showDialogState: true
+    ...getDefaultRunTimeSettingParam()
   }),
   getters: {
     getUrl(): string {
@@ -44,6 +56,9 @@ const useSettingStore = defineStore('setting', {
      *
      */
     async initSettingParams(): Promise<RpcResult<SettingType>> {
+      // 获取系统信息
+      this.runtime.systemInfo = await window.api.getSysInfo()
+      // 获取配置信息
       const res = await this.getSettingParams()
       initData = JSON.parse(JSON.stringify(this.cloneNewSetting()))
       return Promise.resolve(res)

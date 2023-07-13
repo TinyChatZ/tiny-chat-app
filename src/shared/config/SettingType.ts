@@ -39,6 +39,11 @@ interface SettingChatgptType {
     /** 保存文件前缀 */
     savePrefix: string
   }
+  /** 系统内置的指令 */
+  prompts: {
+    /** 生成标题的指令 */
+    generateTitle: string
+  }
 }
 /** 通用设置 */
 interface SettingGeneralType {
@@ -110,6 +115,10 @@ const getDefaultSetting = (): SettingType => ({
     session: {
       savePath: '',
       savePrefix: ''
+    },
+    prompts: {
+      generateTitle:
+        'I need you to play a dialogue title generation role, you should distill the meaning of the dialogue as simple as possible and generate a reasonable title, the length of the title is less than 20 words,you just tell me the result without other thing,also you should use chinese answer me'
     }
   },
   general: {
@@ -137,4 +146,4 @@ const getDefaultSetting = (): SettingType => ({
   }
 })
 
-export { type SettingType, getDefaultSetting }
+export { type SettingType, type SettingChatgptType, getDefaultSetting }

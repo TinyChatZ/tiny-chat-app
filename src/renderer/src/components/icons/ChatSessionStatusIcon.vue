@@ -1,28 +1,97 @@
 <script setup lang="ts">
+import { NPopover } from 'naive-ui'
 const props = defineProps<{
-  status: 'sync' | 'unsycn'
+  status?: 'sync' | 'unsync' | 'unload' | 'error' | 'unknown'
 }>()
 </script>
 <template>
-  <template v-if="props.status === 'sync'"
-    ><svg
-      xmlns="http://www.w3.org/2000/svg"
-      xmlns:xlink="http://www.w3.org/1999/xlink"
-      viewBox="0 0 24 24"
-    >
-      <path
-        d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6c0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6c0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 0 0 4 12c0 4.42 3.58 8 8 8v3l4-4l-4-4v3z"
-        fill="#098900FF"
-      ></path></svg></template
-  ><template v-else
-    ><svg
-      xmlns="http://www.w3.org/2000/svg"
-      xmlns:xlink="http://www.w3.org/1999/xlink"
-      viewBox="0 0 24 24"
-    >
-      <path
-        d="M10 6.35V4.26c-.66.17-1.29.43-1.88.75l1.5 1.5c.13-.05.25-.11.38-.16zM20 12c0-2.21-.91-4.2-2.36-5.64L20 4h-6v6l2.24-2.24A6.003 6.003 0 0 1 18 12c0 .85-.19 1.65-.51 2.38l1.5 1.5A7.921 7.921 0 0 0 20 12zM4.27 4L2.86 5.41l2.36 2.36a7.925 7.925 0 0 0 1.14 9.87L4 20h6v-6l-2.24 2.24A6.003 6.003 0 0 1 6 12c0-1 .25-1.94.68-2.77l8.08 8.08c-.25.13-.5.24-.76.34v2.09c.8-.21 1.55-.54 2.23-.96l2.58 2.58l1.41-1.41L4.27 4z"
-        fill="#890000FF"
-      ></path></svg
-  ></template>
+  <template v-if="props.status === 'sync'">
+    <n-popover>
+      <div>已同步</div>
+      <template #trigger><div class="sync-circle"></div></template>
+    </n-popover>
+  </template>
+  <template v-else-if="props.status === 'unsync'">
+    <n-popover>
+      <div>同步中</div>
+      <template #trigger><div class="unsync-circle"></div></template>
+    </n-popover>
+  </template>
+  <template v-else-if="props.status === 'unload'">
+    <n-popover>
+      <div>未加载</div>
+      <template #trigger><div class="unload-circle"></div></template>
+    </n-popover>
+  </template>
+  <template v-else-if="props.status === 'error'">
+    <n-popover>
+      <div>异常</div>
+      <template #trigger><div class="error-circle"></div></template>
+    </n-popover>
+  </template>
+  <template v-else>
+    <n-popover>
+      <div>未知状态</div>
+      <template #trigger><div class="unknow-circle"></div></template>
+    </n-popover>
+  </template>
 </template>
+
+<style scoped>
+.error-circle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ff2121;
+  box-shadow: 0 0 5px #ff2121;
+  animation: blink 1s infinite;
+  display: inline-block;
+}
+.error-circle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ff2121;
+  box-shadow: 0 0 5px #ff2121;
+  animation: blink 1s infinite;
+  display: inline-block;
+}
+.unsync-circle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ffb121;
+  box-shadow: 0 0 5px #ffb121;
+  animation: blink 1s infinite;
+  display: inline-block;
+}
+.unload-circle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #838383;
+  box-shadow: 0 0 5px #838383;
+  display: inline-block;
+}
+.sync-circle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #00ff00;
+  box-shadow: 0 0 5px #00ff00;
+  animation: blink 5s infinite;
+  display: inline-block;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+</style>

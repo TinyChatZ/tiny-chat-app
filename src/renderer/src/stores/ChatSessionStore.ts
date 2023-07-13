@@ -11,8 +11,16 @@ import { useMessage } from 'naive-ui'
 
 // 渲染层维护一个独立的ChatSessionStatus用来表示当前状态
 export interface ChatSessionStatusType {
-  /** 该条记录的状态 */
-  status: 'sync' | 'unsync' | 'error' | 'generateTitle' | 'unknown'
+  /** 该条记录的状态
+   * sync:已同步；unsync：未同步；unload：未加载；error：加载失败；
+   */
+  status: 'sync' | 'unsync' | 'unload' | 'error' | 'unknown'
+  /**
+   * 二级状态
+   * generateTitle：标题生成中
+   * generateChat:对话生成中
+   */
+  subStatus?: 'generateTitle' | 'generateChat'
   /** 加载时间 */
   loadTime: Date
 }
@@ -24,7 +32,7 @@ export interface ChatSessionStateType {
   /** 当前Store中所有session Item和Index的状态 */
   statusMap: Map<string, ChatSessionStatusType>
   /** 当前选中的对话session */
-  curChatSessionId?: string
+  curChatSessionId: string
   /** 同步状态，true为已同步，false为未同步 */
   sync: boolean
   /** 最近更新时间 */
@@ -42,7 +50,7 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
     sessions: new Map(),
     indexMap: new Map(),
     statusMap: new Map(),
-    curChatSessionId: undefined,
+    curChatSessionId: '-1',
     sync: false,
     lastModify: new Date(),
     showItemEditBar: false
@@ -84,12 +92,12 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
       )
       // 如果没有会话则创建一个
       if (this.indexMap.size <= 0) {
-        const newSession = await this.createNewSession()
-        newSession && (await this.loadSession(newSession))
+        await this.createNewSession()
       }
       this.statusMap = new Map()
       for (const item of this.indexMap.keys()) {
-        this.statusMap.set(item, { status: 'sync', loadTime: new Date() })
+        // 所有默认值为未加载
+        this.statusMap.set(item, { status: 'unload', loadTime: new Date() })
       }
       // 默认策略为选中第一个
       this.loadSession(this.indexArray[0])
@@ -105,6 +113,8 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
       if (chatSession) {
         this.sessions.set(chatSession.id, chatSession)
         this.indexMap.set(chatSession.id, getChatSessionIndexByItem(chatSession))
+        this.statusMap.set(chatSession.id, { status: 'unload', loadTime: new Date() })
+        await this.loadSession(chatSession)
       }
       return chatSession
     },
@@ -132,6 +142,7 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
         chatgptStore.chatList = chatSessionItem.chatList ?? []
         chatgptStore.refreshIndexMap()
         this.curChatSessionId = chatSessionItem.id
+        this.statusMap.set(chatSessionItem.id, { status: 'sync', loadTime: new Date() })
       } else {
         console.error('载入的chatgptStore为空')
       }
@@ -158,8 +169,6 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
       }
       // 如果获取到则刷新
       if (session) {
-        const status = this.statusMap.get(session.id)
-        status && (status.status = 'unsync')
         // 如果chatList不存在则表示更新索引
         if (chatList) {
           session.chatList = chatList
@@ -172,6 +181,8 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
         if (result) {
           this.sessions.set(result.id, session)
           this.indexMap.set(result.id, getChatSessionIndexByItem(session))
+          const status = this.statusMap.get(session.id)
+          status && (status.status = 'sync')
           return session
         }
       }
@@ -191,8 +202,7 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
         if (result) {
           this.sessions.set(result.id, result)
           this.indexMap.set(result.id, getChatSessionIndexByItem(result))
-          const newSession = await this.createNewSession()
-          newSession && (await this.loadSession(newSession))
+          await this.createNewSession()
         }
       }
       // 其余情况定位到删除位置，然后处理
@@ -205,14 +215,35 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
         if (i >= this.indexArray.length) {
           useMessage().error('下标越界了……')
         }
-        this.loadSession(this.indexArray[i - 1 >= 0 ? i - 1 : 0])
-        const result = await window.api.modifyChatSessionItem(Object.assign({}, item), 'delete')
-        if (!result.success) {
-          useMessage().error(result.code)
+        const result = TinyResultUtils.getDataUndefined(
+          await window.api.modifyChatSessionItem(Object.assign({}, item), 'delete')
+        )
+        if (result) {
+          this.sessions.delete(result.id)
+          this.indexMap.delete(result.id)
+          this.statusMap.delete(result.id)
+          // 如果当前选中的是删除的id则修改位置
+          if (this.curChatSessionId === item.id) {
+            this.loadSession(this.indexArray[i - 1 >= 0 ? i - 1 : 0])
+          }
         } else {
-          this.curChatSessionId = this.indexArray[i - 1 >= 0 ? i - 1 : 0].id
+          this.statusMap.set(item.id, { status: 'error', loadTime: new Date() })
         }
       }
+    },
+    /**
+     * 获取某个session的状态
+     * @param session session对象，id也可以
+     * @returns 空或者对应session的状态map
+     */
+    getStatusBySession(
+      session?: string | ChatSessionIndexType | ChatSessionItemType
+    ): ChatSessionStatusType | undefined {
+      let id
+      if (!session) id = this.curChatSessionId
+      else if (typeof session === 'string') id = session
+      else id = session.id
+      return this.statusMap.get(id)
     }
   }
 })
@@ -221,15 +252,15 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
  * ChatSession注册监听更新时间
  * todo 这里最好优化成增量
  */
-window.handler.updateChatSessionState((_e, value) => {
-  console.log(`接收到主进程的缓存刷新事件:${JSON.stringify(value)}`)
-  const chatSession = useChatSessionStore()
-  chatSession.indexMap = value.index
-  chatSession.sessions = value.detail
-  console.log(value.index)
-  chatSession.statusMap = new Map()
-  for (const item of chatSession.indexMap.keys()) {
-    chatSession.statusMap.set(item, { status: 'sync', loadTime: new Date() })
-  }
-  return value
-})
+// window.handler.updateChatSessionState((_e, value) => {
+//   console.log(`接收到主进程的缓存刷新事件:${JSON.stringify(value)}`)
+//   const chatSession = useChatSessionStore()
+//   chatSession.indexMap = value.index
+//   chatSession.sessions = value.detail
+//   console.log(value.index)
+//   chatSession.statusMap = new Map()
+//   for (const item of chatSession.indexMap.keys()) {
+//     chatSession.statusMap.set(item, { status: 'sync', loadTime: new Date() })
+//   }
+//   return value
+// })

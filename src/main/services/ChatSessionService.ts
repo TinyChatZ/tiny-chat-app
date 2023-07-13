@@ -9,8 +9,6 @@ import {
 import { getConfigPath } from './SetService'
 import path from 'path'
 import fs from 'fs/promises'
-import { WindowsManageUtils } from '../utils/WindowManageUtils'
-import { EventNames } from '@shared/common/EventNames'
 import { TinyResult, TinyResultBuilder } from '@shared/common/TinyResult'
 import { StatusCode } from '@shared/common/StatusCode'
 

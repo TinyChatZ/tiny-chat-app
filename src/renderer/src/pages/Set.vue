@@ -2,6 +2,7 @@
 import { useSettingStore } from '@renderer/stores/SettingStore'
 import {
   NCard,
+  NThing,
   NAnchor,
   NAnchorLink,
   NForm,
@@ -21,7 +22,7 @@ import {
   NIcon
 } from 'naive-ui'
 import { ref, onMounted, watch } from 'vue'
-import { SettingType, getDefaultSetting } from '@shared/config/SettingType'
+import { SettingType, SettingChatgptType, getDefaultSetting } from '@shared/config/SettingType'
 import IconMain from '@renderer/components/icons/IconMain.vue'
 import GithubButton from 'vue-github-button'
 
@@ -48,7 +49,6 @@ watch(
   formValue,
   async () => {
     // TODO 最好添加节流，否则每次都会请求
-    console.log(formValue.value.general.fontSize)
     settingStore.setSettingParams(formValue.value)
   },
   { deep: true }
@@ -88,6 +88,74 @@ onMounted(async () => {
     sysFontFamiliesLoading.value = false
   }
 })
+
+// 处理All In One配置
+const allInOneConfigData = ref('')
+const allInOneLoading = ref(false)
+const allInOneButtonText = ref('生成配置')
+const allInOneConfigInputLoading = ref(false)
+// 生成AllInOne配置
+function generateAllInOneConfig(): void {
+  allInOneLoading.value = true
+  try {
+    const json = JSON.stringify(settingStore.chatgpt)
+    window.electronClipboard.writeText(window.btoa(json))
+    message.success('生成成功已复制到剪切板')
+  } catch {
+    message.error('生成位置异常')
+  } finally {
+    allInOneLoading.value = false
+    allInOneButtonText.value = '✔️'
+    setTimeout(() => (allInOneButtonText.value = '生成配置'), 1000)
+  }
+}
+// 监听修改
+watch(allInOneConfigData, (newValue) => {
+  if (newValue) {
+    allInOneConfigInputLoading.value = true
+    setTimeout(() => {
+      try {
+        const json = JSON.parse(decodeURIComponent(window.atob(newValue)))
+        const gptConfig: SettingChatgptType = getDefaultSetting().chatgpt
+        if (json.token) gptConfig.token = json.token
+
+        if (json.options && json.options.limitsLength)
+          gptConfig.options.limitsLength = json.options.limitsLength
+
+        if (json.options && json.options.limitsBehavior)
+          gptConfig.options.limitsBehavior = json.options.limitsBehavior
+
+        if (json.options && json.options.limitsCalculate)
+          gptConfig.options.limitsCalculate = json.options.limitsCalculate
+
+        if (json.proxy && json.proxy.address) gptConfig.proxy.address = json.proxy.address
+
+        if (json.proxy && json.proxy.param) gptConfig.proxy.param = json.proxy.param
+
+        if (json.proxy && json.proxy.useProxy) gptConfig.proxy.useProxy = json.proxy.useProxy
+
+        if (json.session && json.session.savePath)
+          gptConfig.session.savePath = json.session.savePath
+
+        if (json.session && json.session.savePrefix)
+          gptConfig.session.savePrefix = json.session.savePrefix
+
+        if (json.prompts && json.prompts.generateTitle)
+          gptConfig.prompts.generateTitle = json.prompts.generateTitle
+
+        formValue.value.chatgpt = gptConfig
+        message.success('解析成功')
+      } catch (e) {
+        console.error(e)
+        message.error('解析失败，请检查格式')
+      } finally {
+        allInOneConfigInputLoading.value = false
+        allInOneConfigData.value = ''
+      }
+    }, 500)
+  }
+})
+
 // Hash模式下锚点定位兼容性代码
 function gotoHash(id: string): void {
   const target = document.querySelector(id)
@@ -187,54 +255,75 @@ function gotoHash(id: string): void {
             </n-card>
 
             <!-- chagpt配置卡片 -->
-            <n-card id="chatgpt" title="ChatGPT">
-              <n-form>
-                <n-form-item label="OpenAI Token"
-                  ><n-input
-                    v-model:value="formValue.chatgpt.token"
-                    placeholder="这是OpenAI官网中生成的token"
-                /></n-form-item>
-                <n-form-item label="文本限制长度(500-5000)">
-                  <n-input-number
-                    v-model:value="formValue.chatgpt.options.limitsLength"
-                    max="5000"
-                    min="500"
-                    step="500"
-                    placeholder="限制文本长度默认为5000"
-                  />
-                </n-form-item>
-                <n-form-item label="文本限制策略">
-                  <n-radio-group v-model:value="formValue.chatgpt.options.limitsBehavior">
-                    <n-radio-button value="failSafe">忽略早期内容</n-radio-button>
-                    <n-radio-button value="failFast">提示错误</n-radio-button>
-                  </n-radio-group>
-                </n-form-item>
-                <n-collapse-transition
-                  :show="formValue.chatgpt.options.limitsBehavior === 'failSafe'"
-                >
-                  <n-form-item label="文本限制计量">
-                    <n-radio-group v-model:value="formValue.chatgpt.options.limitsCalculate">
-                      <n-radio-button value="character">按字符计算</n-radio-button>
-                      <n-radio-button value="block">按问答计算</n-radio-button>
+            <n-card id="chatgpt">
+              <n-thing title="ChatGPT">
+                <template #header-extra>
+                  <n-button text :loading="allInOneLoading" @click="generateAllInOneConfig">
+                    {{ allInOneButtonText }}
+                  </n-button>
+                </template>
+                <n-form>
+                  <n-form-item label="All In One 配置">
+                    <n-input
+                      v-model:value="allInOneConfigData"
+                      :loading="allInOneConfigInputLoading"
+                      type="textarea"
+                      placeholder="如何有人给你提供了All In One Token，你可以直接把这段话粘贴到这里"
+                    />
+                  </n-form-item>
+                  <n-form-item label="OpenAI Token"
+                    ><n-input
+                      v-model:value="formValue.chatgpt.token"
+                      placeholder="这是OpenAI官网中生成的token"
+                  /></n-form-item>
+                  <n-form-item label="文本限制长度(500-5000)">
+                    <n-input-number
+                      v-model:value="formValue.chatgpt.options.limitsLength"
+                      max="5000"
+                      min="500"
+                      step="500"
+                      placeholder="限制文本长度默认为5000"
+                    />
+                  </n-form-item>
+                  <n-form-item label="文本限制策略">
+                    <n-radio-group v-model:value="formValue.chatgpt.options.limitsBehavior">
+                      <n-radio-button value="failSafe">忽略早期内容</n-radio-button>
+                      <n-radio-button value="failFast">提示错误</n-radio-button>
                     </n-radio-group>
                   </n-form-item>
-                </n-collapse-transition>
-                <n-form-item label="代理:是否使用代理模式">
-                  <n-switch v-model:value="formValue.chatgpt.proxy.useProxy" />
-                </n-form-item>
-                <n-collapse-transition :show="formValue.chatgpt.proxy.useProxy">
-                  <n-form-item label="代理地址"
-                    ><n-input
-                      v-model:value="formValue.chatgpt.proxy.address"
-                      placeholder="请输入代理地址"
-                  /></n-form-item>
-                  <n-form-item label="代理Token"
-                    ><n-input
-                      v-model:value="formValue.chatgpt.proxy.param"
-                      placeholder="请输入代理token"
-                  /></n-form-item>
-                </n-collapse-transition>
-              </n-form>
+                  <n-collapse-transition
+                    :show="formValue.chatgpt.options.limitsBehavior === 'failSafe'"
+                  >
+                    <n-form-item label="文本限制计量">
+                      <n-radio-group v-model:value="formValue.chatgpt.options.limitsCalculate">
+                        <n-radio-button value="character">按字符计算</n-radio-button>
+                        <n-radio-button value="block">按问答计算</n-radio-button>
+                      </n-radio-group>
+                    </n-form-item>
+                  </n-collapse-transition>
+                  <n-form-item label="Prompt:标题生成（除非你有更好的否则请不要修改）">
+                    <n-input
+                      v-model:value="formValue.chatgpt.prompts.generateTitle"
+                      type="textarea"
+                    ></n-input>
+                  </n-form-item>
+                  <n-form-item label="代理:是否使用代理模式">
+                    <n-switch v-model:value="formValue.chatgpt.proxy.useProxy" />
+                  </n-form-item>
+                  <n-collapse-transition :show="formValue.chatgpt.proxy.useProxy">
+                    <n-form-item label="代理地址"
+                      ><n-input
+                        v-model:value="formValue.chatgpt.proxy.address"
+                        placeholder="请输入代理地址"
+                    /></n-form-item>
+                    <n-form-item label="代理Token"
+                      ><n-input
+                        v-model:value="formValue.chatgpt.proxy.param"
+                        placeholder="请输入代理token"
+                    /></n-form-item>
+                  </n-collapse-transition>
+                </n-form>
+              </n-thing>
             </n-card>
 
             <!-- 快捷键卡片 -->

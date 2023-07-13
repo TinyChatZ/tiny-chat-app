@@ -53,24 +53,32 @@ const scrollbar = ref<VNodeRef>('')
 const sendData = async (): Promise<void> => {
   // 如果question为空直接返回不发送
   if (!question.value) return
+  const curStatus = chatSessionStore.getStatusBySession(chatSessionStore.curChatSessionId)
   const tQuestion = question.value
   loading.value = true
   question.value = ''
+  if (curStatus) {
+    curStatus.status = 'unsync'
+    curStatus.subStatus = 'generateChat'
+  }
   const res = await chatgptStore.sendChatGPTQuery(tQuestion, () => {
     setTimeout(() => scrollbar.value.scrollBy({ top: 300 }), 100)
   })
+  curStatus && (curStatus.subStatus = undefined)
   loading.value = false
   if (res.success) {
     if (chatSessionStore.curChatSession && !chatSessionStore.curChatSession.nameGenerate) {
       // 刷新对话标题
+      if (curStatus) curStatus.subStatus = 'generateTitle'
       chatSessionStore.curChatSession.name = await chatgptStore.getChatListRefining()
+      if (curStatus) curStatus.subStatus = undefined
       chatSessionStore.curChatSession.nameGenerate = true
-      const res = await chatSessionStore.syncSessionInfo(chatSessionStore.curChatSession)
-      if (!res.success) message.error(res.message ?? '数据保存异常')
+      await chatSessionStore.syncSessionInfo(chatSessionStore.curChatSession)
     }
   } else {
     message.error(res.message || '调用未知异常')
   }
+  curStatus && (curStatus.status = 'sync')
 }
 
 // 刷新数据

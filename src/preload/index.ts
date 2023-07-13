@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { clipboard, contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import { RpcResult } from '../main/utils/RpcUtils'
 import { type SettingType } from '@shared/config/SettingType'
@@ -78,6 +78,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
     contextBridge.exposeInMainWorld('handler', handler)
+    contextBridge.exposeInMainWorld('electronClipboard', clipboard)
   } catch (error) {
     console.error(error)
   }
@@ -86,4 +87,6 @@ if (process.contextIsolated) {
   window.electron = electronAPI
   // @ts-ignore (define in dts)
   window.api = api
+  // @ts-ignore (define in dts)
+  window.electronClipboard = clipboard
 }

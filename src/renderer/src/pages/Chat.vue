@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { NPopover, NScrollbar, NEl, NIcon, NEllipsis, useMessage } from 'naive-ui'
+import {
+  NPopover,
+  NScrollbar,
+  NEl,
+  NIcon,
+  NEllipsis,
+  NDrawer,
+  NDrawerContent,
+  useMessage
+} from 'naive-ui'
 import { ref, watch } from 'vue'
 import MainChat from '@renderer/components/chat/MainChat.vue'
 import SessionList from '@renderer/components/session/SessionList.vue'
@@ -8,7 +17,8 @@ import IconMain from '@renderer/components/icons/IconMain.vue'
 import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
 import { useSettingStore } from '@renderer/stores/SettingStore'
 import { TinyResultUiMessageHandler, TinyResultUtils } from '@renderer/utils/TinyResultUtils'
-
+import MainChatSessionPanel from '@renderer/components/chat/MainChatSessionPanel.vue'
+import SessionStatus from '@renderer/components/session/SessionStatus.vue'
 const settingStore = useSettingStore()
 const chatSessionStore = useChatSessionStore()
 
@@ -78,29 +88,43 @@ function onPopoverStatusChange(status: boolean): void {
   popoverStatus.value = status
 }
 
-/**
- * 切换是否展示整个窗口
- * 单击模式下只允许从展开切换到缩放，不允许操作
- * @param clickType
- */
-function changeShowDialog(clickType: 'single' | 'double'): void {
-  if (clickType === 'double') settingStore.showDialogState = !settingStore.showDialogState
-  // else {
-  //   if (settingStore.showDialogState) settingStore.showDialogState = false
-  // }
-}
-
 // 点击某个session后缩回列表
 const popover = ref()
 function sessionItemSelect(): void {
+  showDrawer.value = false
   popover.value.setShow(false)
+}
+
+// 抽屉相关
+const showDrawer = ref(false)
+
+// 处理dialog缩放事件
+let time
+function changeShowDrawer(): void {
+  console.log('click')
+  if (time) {
+    clearTimeout(time)
+    time = null
+    settingStore.showDialogState = !settingStore.showDialogState
+    window.api.resize(true)
+  } else {
+    time = setTimeout(() => {
+      clearTimeout(time)
+      time = null
+      if (settingStore.showDialogState) {
+        showDrawer.value = !showDrawer.value
+        window.api.resize(true)
+      }
+    }, 200)
+  }
 }
 </script>
 
 <template>
-  <div class="flex flex-col h-full">
+  <div class="h-full">
     <div
-      class="flex content-center items-center cursor-move"
+      style="height: 10%"
+      class="flex items-center cursor-move"
       @mouseover="(e) => onMouseMoveEvent(e, 'over')"
       @mouseout="(e) => onMouseMoveEvent(e, 'out')"
       @mousedown="(e) => onMouseMoveEvent(e, 'down')"
@@ -113,29 +137,43 @@ function sessionItemSelect(): void {
         style="background-color: var(--body-color)"
       >
         <!-- 主要图标 -->
-        <n-popover ref="popover" placement="bottom-start" :on-update-show="onPopoverStatusChange">
+        <n-popover
+          ref="popover"
+          placement="bottom-start"
+          :disabled="settingStore.showDialogState"
+          :on-update-show="onPopoverStatusChange"
+        >
           <template #trigger>
             <div
               class="rounded-full inline-block hover:cursor-pointer p-1"
               style="width: 41px; height: 41px"
-              @click="changeShowDialog('single')"
-              @dblclick="changeShowDialog('double')"
+              @click="changeShowDrawer"
             >
               <n-icon size="41">
                 <icon-main />
               </n-icon>
             </div>
           </template>
-          <n-scrollbar style="max-height: 33vh">
-            <session-list :select-item-hooks="sessionItemSelect" />
+          <n-scrollbar class="mt-4" style="max-height: 40vh">
+            <session-list style="width: 80vw" :select-item-hooks="sessionItemSelect" />
           </n-scrollbar>
           <SessionToolbar />
         </n-popover>
       </n-el>
       <!-- 标题 -->
-      <div v-show="settingStore.showDialogState" class="inline-block pt-1 pl-2 pr-6 select-none">
+      <div
+        v-show="settingStore.showDialogState"
+        class="flex gap-x-2 items-center pt-1 pr-6 select-none"
+      >
+        <!-- session状态(生成标题或同步状态) -->
+        <div>
+          <session-status :session="chatSessionStore.curChatSessionId" />
+        </div>
+        <!-- 标题名称 -->
         <n-ellipsis
-          :tooltip="{ width: 300 }"
+          :tooltip="{
+            width: 300
+          }"
           :line-clamp="1"
           :class="{
             'text-2xl': (chatSessionStore.curChatSession?.name.length ?? 1) < 11,
@@ -151,6 +189,18 @@ function sessionItemSelect(): void {
       <main-chat ref="mainChat" />
     </div>
   </div>
+  <!-- 展开模式的抽屉 -->
+  <n-drawer
+    v-model:show="showDrawer"
+    :trap-focus="false"
+    :block-scroll="false"
+    placement="left"
+    width="85%"
+  >
+    <n-drawer-content :native-scrollbar="false">
+      <MainChatSessionPanel :on-click-hook="sessionItemSelect"></MainChatSessionPanel>
+    </n-drawer-content>
+  </n-drawer>
 </template>
 
 <style lang="less">

@@ -1,7 +1,11 @@
 <script lang="ts" setup>
 import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
 import { useSettingStore } from '@renderer/stores/SettingStore'
-import { ChatSessionIndexType } from '@shared/chat/ChatSessionType'
+import {
+  ChatSessionIndexType,
+  getChatSessionIndexByItem,
+  getChatSessionIndexDefault
+} from '@shared/chat/ChatSessionType'
 import { NButton, NPopover, NIcon } from 'naive-ui'
 import ChatSessionAddIcon from '@renderer/components/icons/ChatSessionAddIcon.vue'
 import ChatSessionInOutIcon from '../icons/ChatSessionInOutIcon.vue'
@@ -33,7 +37,10 @@ function changeEditState(): void {
 // 创建新session
 async function createNewSession(): Promise<void> {
   const session = await chatSessiontStore.createNewSession()
-  props.selectItemHooks?.(session)
+  if (session) {
+    chatSessiontStore.curChatSessionId = session.id
+    props.selectItemHooks?.(getChatSessionIndexByItem(session))
+  }
 }
 
 // 退出程序
@@ -43,11 +50,12 @@ const eixtProgram = (): void => {
 
 // 是否显示dialog
 const showDialog = (): void => {
+  props.selectItemHooks?.(chatSessiontStore.curChatSession || getChatSessionIndexDefault())
   settingStore.showDialogState = !settingStore.showDialogState
 }
 </script>
 <template>
-  <div class="text-center mt-5 flex gap-x-2">
+  <div class="text-center flex gap-x-2">
     <n-popover>
       <template #trigger>
         <n-button text @click="createNewSession">

@@ -1,7 +1,7 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
 import { type SettingType } from '../main/types/SettingType'
 import { ChatSessionIndexType, ChatSessionItemType } from '@shared/chat/ChatSessionType'
-import { IgnoreMouseEventsOptions } from 'electron'
+import { Clipboard } from 'electron'
 import { TinyResult } from '@shared/common/TinyResult'
 
 declare global {
@@ -15,6 +15,7 @@ declare global {
   }
   interface Window {
     electron: ElectronAPI
+    electronClipboard: Clipboard
     api: {
       /**
        * 修改chat界面的尺寸
