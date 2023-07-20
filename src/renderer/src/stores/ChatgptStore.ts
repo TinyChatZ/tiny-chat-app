@@ -5,7 +5,6 @@ import { ChatItem } from '@shared/chat/ChatType'
 import { TinyResult, TinyResultBuilder } from '@shared/common/TinyResult'
 import { StatusCode } from '@shared/common/StatusCode'
 import { useChatSessionStore } from './ChatSessionStore'
-import { useMessage } from 'naive-ui'
 /**
  * ChatgptStoreState类型
  */
@@ -190,8 +189,12 @@ export const chatgptStoreFactory = (id?: string) =>
        */
       async sendChatGPTQuery(
         question: string,
-        refreshHook?: () => void
+        refreshHook?: (isQuestionCreate: boolean) => void
       ): Promise<TinyResult<void>> {
+        // 修改session状态
+        const chatSessionStore = useChatSessionStore()
+        this.id && chatSessionStore.prepareSessionSyncStatus(this.id, 'generateChat')
+        // 开始发送gpt请求
         this.createUserInfo(question)
         const gptSetting = useSettingStore().chatgpt
         if (!gptSetting?.token) {
@@ -200,6 +203,7 @@ export const chatgptStoreFactory = (id?: string) =>
         const { url, options } = this.getRequestParam
         options.body = this.getRequestBody
         const position = this.createChatListItem('assistant')
+        refreshHook && refreshHook(true)
         // 发起EventSource调用
         try {
           await getEventSource<{ choices: Array<{ delta: { role?: string; content?: string } }> }>(
@@ -213,7 +217,7 @@ export const chatgptStoreFactory = (id?: string) =>
                 } else if (res.data?.choices[0].delta?.content) {
                   this.chatList[this.getRealIndex(position)].content +=
                     res.data?.choices[0].delta?.content
-                  refreshHook && refreshHook()
+                  refreshHook && refreshHook(false)
                 }
               }
             }
@@ -228,14 +232,29 @@ export const chatgptStoreFactory = (id?: string) =>
         }
         return TinyResultBuilder.buildSuccess()
       },
-      /** 获取当前ChatList的总结信息，用于自动标题生成 */
+
+      /** 获取当前ChatList的总结信息
+       * 用于自动标题生成 */
       async getChatListRefining(): Promise<string> {
+        // 获取sessionStore
+        const chatSessionStore = useChatSessionStore()
+        try {
+          this.id && chatSessionStore.prepareSessionSyncStatus(this.id, 'generateTitle')
+        } catch (e) {
+          console.log(e)
+          if (e === StatusCode.E20009) {
+            window.$message.error('内容生成中，暂不支持创建标题')
+            return ''
+          }
+        }
+        // 获取配置
         const settingStore = useSettingStore()
         if (!settingStore.chatgpt.prompts.generateTitle) {
-          const message = useMessage()
-          message.error('需配置标题生成的prompts')
-          throw '请配置标题生成的prompts'
+          window.$message.error('需配置标题生成的prompts')
+          this.id && chatSessionStore.sessionModifySuccess(this.id)
+          return ''
         }
+        // 发起请求
         const { url, options } = this.getRequestParam
         const body = this.getRequestBody
         body.messages.map((item) => ({
@@ -247,20 +266,27 @@ export const chatgptStoreFactory = (id?: string) =>
           content: settingStore.chatgpt.prompts.generateTitle
         })
         options.body = body
-        const res = await getEventSource<{
-          choices: Array<{ delta: { role?: string; content?: string } }>
-        }>(url, options)
-        let title = ''
-        for (const item of res.data) {
-          if (typeof item.data != 'string' && item.data?.choices[0].delta?.content) {
-            title += item.data?.choices[0].delta?.content
+
+        try {
+          const res = await getEventSource<{
+            choices: Array<{ delta: { role?: string; content?: string } }>
+          }>(url, options)
+          let title = ''
+          for (const item of res.data) {
+            if (typeof item.data != 'string' && item.data?.choices[0].delta?.content) {
+              title += item.data?.choices[0].delta?.content
+            }
           }
+          if (title.length > 50) {
+            console.warn(`发生标题缩减原始结果为：${title}`)
+            title = title.substring(0, 50)
+          }
+          return title
+        } catch {
+          window.$message.error('请求失败，请检查网络')
+          this.id && chatSessionStore.sessionModifySuccess(this.id)
+          return ''
         }
-        if (title.length > 50) {
-          console.warn(`发生标题缩减原始结果为：${title}`)
-          title = title.substring(0, 50)
-        }
-        return title
       },
       /**
        * 获取真实的索引

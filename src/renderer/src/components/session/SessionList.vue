@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
 import { ChatSessionIndexType } from '@shared/chat/ChatSessionType'
-import { NButton, NPopover, NIcon, NInput, NEllipsis, useMessage } from 'naive-ui'
+import { NButton, NPopover, NIcon, NInput, NEllipsis } from 'naive-ui'
 import ChatSessionRenameIcon from '../icons/ChatSessionRenameIcon.vue'
+import ChatSessionOkIcon from '../icons/ChatSessionOkIcon.vue'
 import ChatSessionDeleteIcon from '../icons/ChatSessionDeleteIcon.vue'
 import { ref } from 'vue'
 import { useSettingStore } from '@renderer/stores/SettingStore'
@@ -12,8 +13,6 @@ import { useChatgptStore } from '@renderer/stores/ChatgptStore'
 
 const chatSessiontStore = useChatSessionStore()
 const settingStore = useSettingStore()
-
-const message = useMessage()
 
 // props
 const props = defineProps<{
@@ -58,26 +57,18 @@ async function clickRenameSessionName(item: ChatSessionIndexType): Promise<void>
 
 // 重新生成会话标题
 async function clickGenerateTitle(item: ChatSessionIndexType): Promise<void> {
-  const status = chatSessiontStore.getStatusBySession(item)
-  if (status?.subStatus) {
-    message.error('内容生成中，暂不支持创建标题')
-    return
-  }
-  if (status) {
-    status.status = 'unsync'
-    status.subStatus = 'generateTitle'
-  }
   const res = await useChatgptStore(item.id).getChatListRefining()
-  item.name = res
-  if (status) status.subStatus = undefined
-  await chatSessiontStore.syncSessionInfo(item)
-  if (status) status.status = 'sync'
+  if (res !== '') {
+    item.name = res
+    await chatSessiontStore.syncSessionInfo(item)
+  }
 }
 
 // 删除session
 async function clickDeleteSessionName(item: ChatSessionIndexType): Promise<void> {
   await chatSessiontStore.deleteSessionInfo(item)
 }
+
 // 切换选中的session
 function checkoutSession(item: ChatSessionIndexType): void {
   chatSessiontStore.loadSession(item)
@@ -135,7 +126,10 @@ function checkoutSession(item: ChatSessionIndexType): void {
         <n-popover>
           <template #trigger>
             <n-button size="tiny" quaternary @click="clickRenameSessionName(item)">
-              <n-icon :size="14"><chat-session-rename-icon /></n-icon>
+              <n-icon :size="14">
+                <chat-session-rename-icon v-if="item.id !== renameSessionId" />
+                <chat-session-ok-icon v-else />
+              </n-icon>
             </n-button>
           </template>
           <span>重命名</span>

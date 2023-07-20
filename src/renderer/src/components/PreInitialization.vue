@@ -7,6 +7,7 @@ import { onMounted } from 'vue'
 onMounted(async () => {
   // 初始化默认的handler
   const message = useMessage()
+  window.$message = message
   TinyResultUtils.defaultHandler = new TinyResultUiMessageHandler(message)
 
   // 初始化session

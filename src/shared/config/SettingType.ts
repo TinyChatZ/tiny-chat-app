@@ -53,6 +53,13 @@ interface SettingGeneralType {
   windowTop: boolean
   /** 保存窗口位置 */
   saveWindowPosition: boolean
+  /** 缩略模式单击唤醒session;默认为false，即鼠标悬停就打开 */
+  sessionWakeUp: {
+    /** 缩略图模式触发 */
+    thumbnall: 'click' | 'hover'
+    /** session中触发方式 */
+    mainWindow: 'click' | 'hover'
+  }
   /** 窗口尺寸 */
   windowSize: {
     width: number
@@ -125,6 +132,10 @@ const getDefaultSetting = (): SettingType => ({
     displayMode: 'system',
     windowTop: false,
     saveWindowPosition: false,
+    sessionWakeUp: {
+      thumbnall: 'hover',
+      mainWindow: 'click'
+    },
     windowSize: {
       width: 400,
       height: 650

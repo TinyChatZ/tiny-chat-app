@@ -213,6 +213,24 @@ function gotoHash(id: string): void {
                 <n-form-item label="保留窗口位置">
                   <n-switch v-model:value="formValue.general.saveWindowPosition" />
                 </n-form-item>
+                <n-form-item label="多会话唤醒方式">
+                  <div class="flex flex-col gap-y-5">
+                    <div class="flex gap-x-2 items-center">
+                      <div>主窗口图标唤醒方式：</div>
+                      <n-radio-group v-model:value="formValue.general.sessionWakeUp.mainWindow">
+                        <n-radio-button value="click">鼠标单击</n-radio-button>
+                        <n-radio-button value="hover">鼠标hover</n-radio-button>
+                      </n-radio-group>
+                    </div>
+                    <div v-show="false" class="flex gap-x-2">
+                      <div>缩略图图标唤醒方式：</div>
+                      <n-radio-group v-model:value="formValue.general.sessionWakeUp.thumbnall">
+                        <n-radio-button value="click">鼠标单击</n-radio-button>
+                        <n-radio-button value="hover">鼠标hover</n-radio-button>
+                      </n-radio-group>
+                    </div>
+                  </div>
+                </n-form-item>
                 <n-form label="窗口大小" label-placement="left">
                   <div class="flex gap-x-2">
                     <n-form-item label="宽度">

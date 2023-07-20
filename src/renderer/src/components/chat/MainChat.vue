@@ -1,15 +1,6 @@
 <script setup lang="ts">
-import {
-  NInput,
-  NList,
-  NListItem,
-  NScrollbar,
-  NSpin,
-  useMessage,
-  NButton,
-  NButtonGroup
-} from 'naive-ui'
-import { ref, VNodeRef, computed, watch } from 'vue'
+import { NInput, NList, NListItem, NSpin, useMessage, NButton, NButtonGroup } from 'naive-ui'
+import { ref, computed, watch } from 'vue'
 import { chatgptStoreFactory, useChatgptStore } from '@renderer/stores/ChatgptStore'
 import { useSettingStore } from '@renderer/stores/SettingStore'
 import MainChatItem from './MainChatItem.vue'
@@ -46,39 +37,49 @@ watch(
 const data = computed(() => ({
   ...mapWritableState(chatgptStoreFactory(chatSessionStore.curChatSessionId), ['chatList'])
 }))
-// 聊天记录scrollbar
-const scrollbar = ref<VNodeRef>('')
 
 // 发送事件
 const sendData = async (): Promise<void> => {
   // 如果question为空直接返回不发送
   if (!question.value) return
-  const curStatus = chatSessionStore.getStatusBySession(chatSessionStore.curChatSessionId)
   const tQuestion = question.value
   loading.value = true
   question.value = ''
-  if (curStatus) {
-    curStatus.status = 'unsync'
-    curStatus.subStatus = 'generateChat'
-  }
-  const res = await chatgptStore.sendChatGPTQuery(tQuestion, () => {
-    setTimeout(() => scrollbar.value.scrollBy({ top: 300 }), 100)
+  // 注册下拉处理器
+
+  // 发送
+  const res = await chatgptStore.sendChatGPTQuery(tQuestion, (isQuestionCreate: boolean) => {
+    const element = window.document.getElementById('scrollbar')
+    if (element) {
+      if (isQuestionCreate && element.scrollTop + element.clientHeight >= element.scrollHeight - 5)
+        setTimeout(() => element.scrollTo({ behavior: 'smooth', top: element.scrollHeight }), 30)
+      else
+        setTimeout(() => {
+          // 如果垂直便宜量+可视区高度 大于 总高度减去50，代表快到底部了就开始往下滚动
+          if (element.scrollTop + element.clientHeight >= element.scrollHeight - 50)
+            element.scrollTo({ behavior: 'smooth', top: element.scrollHeight })
+        }, 50)
+    }
   })
-  curStatus && (curStatus.subStatus = undefined)
   loading.value = false
+  // 会话请求返回处理
   if (res.success) {
+    // 是否生成标题
     if (chatSessionStore.curChatSession && !chatSessionStore.curChatSession.nameGenerate) {
-      // 刷新对话标题
-      if (curStatus) curStatus.subStatus = 'generateTitle'
-      chatSessionStore.curChatSession.name = await chatgptStore.getChatListRefining()
-      if (curStatus) curStatus.subStatus = undefined
-      chatSessionStore.curChatSession.nameGenerate = true
-      await chatSessionStore.syncSessionInfo(chatSessionStore.curChatSession)
+      const title = await chatgptStore.getChatListRefining()
+      // 持久化结果
+      if (title !== '' && chatSessionStore.curChatSession) {
+        chatSessionStore.curChatSession.nameGenerate = true
+        chatSessionStore.curChatSession.name = title
+        await chatSessionStore.syncSessionInfo(chatSessionStore.curChatSession)
+      } else {
+        message.error('调用未知异常')
+        chatSessionStore.sessionModifyFail(chatSessionStore.curChatSession)
+      }
     }
   } else {
     message.error(res.message || '调用未知异常')
   }
-  curStatus && (curStatus.status = 'sync')
 }
 
 // 刷新数据
@@ -91,15 +92,13 @@ const refresh = (): void => {
 
 <template>
   <div class="flex flex-col w-auto h-full">
-    <div class="h-4/5">
-      <n-scrollbar ref="scrollbar">
-        <n-list hoverable clickable>
-          <!-- 聊天记录list -->
-          <n-list-item v-for="item in data.chatList.get()" :key="item.date?.toString()">
-            <MainChatItem :item="item" />
-          </n-list-item>
-        </n-list>
-      </n-scrollbar>
+    <div id="scrollbar" class="h-4/5 overflow-x-hidden overflow-y-auto scrollbar">
+      <n-list hoverable clickable>
+        <!-- 聊天记录list -->
+        <n-list-item v-for="item in data.chatList.get()" :key="item.date?.toString()">
+          <MainChatItem :item="item" />
+        </n-list-item>
+      </n-list>
     </div>
     <div class="h-1/5 p-2 flex space-x-2 items-center">
       <n-spin :show="loading" class="w-full">
@@ -123,4 +122,56 @@ const refresh = (): void => {
   </div>
 </template>
 
-<style></style>
+<style scoped lang="less">
+// 滚动条相关代码
+.scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  /**/
+}
+
+.scrollbar::-webkit-scrollbar-track {
+  background: rgb(239, 239, 239);
+  border-radius: 3px;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+  background: #bfbfbf;
+  border-radius: 8px;
+}
+
+.scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+.scrollbar::-webkit-scrollbar-corner {
+  background: #179a16;
+}
+
+@media (prefers-color-scheme: dark) {
+  // 滚动条相关代码
+  .scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    /**/
+  }
+
+  .scrollbar::-webkit-scrollbar-track {
+    background: #222;
+    border-radius: 3px;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 8px;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #c0c0c0;
+  }
+
+  .scrollbar::-webkit-scrollbar-corner {
+    background: #179a16;
+  }
+}
+</style>

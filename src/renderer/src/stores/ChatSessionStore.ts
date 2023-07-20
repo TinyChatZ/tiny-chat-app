@@ -8,8 +8,11 @@ import { TinyResultUtils } from '@renderer/utils/TinyResultUtils'
 import { defineStore } from 'pinia'
 import { useChatgptStore } from './ChatgptStore'
 import { useMessage } from 'naive-ui'
+import { StatusCode } from '@shared/common/StatusCode'
 
-// 渲染层维护一个独立的ChatSessionStatus用来表示当前状态
+/** 渲染层维护一个独立的ChatSessionStatus用来表示当前状态
+ * 此状态是一个采用链表实现的堆栈，栈顶是表头，栈底是表尾
+ */
 export interface ChatSessionStatusType {
   /** 该条记录的状态
    * sync:已同步；unsync：未同步；unload：未加载；error：加载失败；
@@ -23,6 +26,10 @@ export interface ChatSessionStatusType {
   subStatus?: 'generateTitle' | 'generateChat'
   /** 加载时间 */
   loadTime: Date
+  /** 此步状态原因 */
+  reason?: string
+  /** 链表结构 */
+  next?: ChatSessionStatusType
 }
 export interface ChatSessionStateType {
   /**当前加载的session */
@@ -33,8 +40,6 @@ export interface ChatSessionStateType {
   statusMap: Map<string, ChatSessionStatusType>
   /** 当前选中的对话session */
   curChatSessionId: string
-  /** 同步状态，true为已同步，false为未同步 */
-  sync: boolean
   /** 最近更新时间 */
   lastModify: Date
   /** 展示Session的编辑按钮 */
@@ -51,7 +56,6 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
     indexMap: new Map(),
     statusMap: new Map(),
     curChatSessionId: '-1',
-    sync: false,
     lastModify: new Date(),
     showItemEditBar: false
   }),
@@ -101,7 +105,6 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
       }
       // 默认策略为选中第一个
       this.loadSession(this.indexArray[0])
-      this.sync = true
       this.lastModify = new Date()
     },
     /**
@@ -142,7 +145,7 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
         chatgptStore.chatList = chatSessionItem.chatList ?? []
         chatgptStore.refreshIndexMap()
         this.curChatSessionId = chatSessionItem.id
-        this.statusMap.set(chatSessionItem.id, { status: 'sync', loadTime: new Date() })
+        this.sessionModifySuccess(chatSessionItem.id)
       } else {
         console.error('载入的chatgptStore为空')
       }
@@ -181,9 +184,10 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
         if (result) {
           this.sessions.set(result.id, session)
           this.indexMap.set(result.id, getChatSessionIndexByItem(session))
-          const status = this.statusMap.get(session.id)
-          status && (status.status = 'sync')
+          this.sessionModifySuccess(result.id)
           return session
+        } else {
+          this.sessionModifyFail(session.id)
         }
       }
       return undefined
@@ -244,6 +248,61 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
       else if (typeof session === 'string') id = session
       else id = session.id
       return this.statusMap.get(id)
+    },
+    /**
+     *准备修改会话的某些内容
+     * @param session 需要处理的会话
+     * @param subStatus 需要修改的子状态
+     * @param interrupt 是否允许打断，默认
+     */
+    prepareSessionSyncStatus(
+      session: string | ChatSessionIndexType | ChatSessionItemType,
+      subStatus?: 'generateTitle' | 'generateChat',
+      interrupt?: boolean
+    ): void {
+      let id
+      if (!session) id = this.curChatSessionId
+      else if (typeof session === 'string') id = session
+      else id = session.id
+      const status = this.statusMap.get(id)
+
+      if (!status) throw 'can not find session status'
+
+      if (status.subStatus && interrupt == undefined) {
+        throw StatusCode.E20009
+      }
+
+      const newStatus = Object.assign({}, status)
+      newStatus.status = 'unsync'
+      newStatus.subStatus = subStatus
+      newStatus.next = status
+      this.statusMap.set(id, newStatus)
+    },
+    /** 同步会话成功调用
+     * 执行成功则清楚原始状态结构，并保留成功的状态结构
+     */
+    sessionModifySuccess(session: string | ChatSessionIndexType | ChatSessionItemType): void {
+      let id
+      if (!session) id = this.curChatSessionId
+      else if (typeof session === 'string') id = session
+      else id = session.id
+      this.statusMap.set(id, { status: 'sync', loadTime: new Date() })
+    },
+    /**
+     * 同步会话失败
+     * 再执行sync方法时出现问题，此时同步会话失败，修改会话状态
+     * @param session
+     */
+    sessionModifyFail(session: string | ChatSessionIndexType | ChatSessionItemType): void {
+      let id
+      if (!session) id = this.curChatSessionId
+      else if (typeof session === 'string') id = session
+      else id = session.id
+      const status = this.statusMap.get(id)
+      if (status) {
+        status.subStatus = undefined
+        status.status = 'unsync'
+      }
     }
   }
 })
