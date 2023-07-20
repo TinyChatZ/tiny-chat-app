@@ -31,6 +31,7 @@ async function clickRenameSessionName(item: ChatSessionIndexType): Promise<void>
   // 如果相等表示确认保存
   if (item.id === renameSessionId.value) {
     renameSessionItem.value.name = renameSessionName.value ?? 'Default'
+    renameSessionItem.value.nameGenerate = true
     await chatSessiontStore.syncSessionInfo(renameSessionItem.value)
     renameSessionId.value = undefined
     renameSessionName.value = undefined
@@ -40,6 +41,7 @@ async function clickRenameSessionName(item: ChatSessionIndexType): Promise<void>
   // 如果不想等，则保存并修改Id
   if (renameSessionId.value != item.id && renameSessionId.value) {
     renameSessionItem.value.name = renameSessionName.value ?? 'Default'
+    renameSessionItem.value.nameGenerate = true
     await chatSessiontStore.syncSessionInfo(renameSessionItem.value)
     renameSessionId.value = item.id
     renameSessionName.value = item.name
@@ -60,6 +62,7 @@ async function clickGenerateTitle(item: ChatSessionIndexType): Promise<void> {
   const res = await useChatgptStore(item.id).getChatListRefining()
   if (res !== '') {
     item.name = res
+    item.nameGenerate = true
     await chatSessiontStore.syncSessionInfo(item)
   }
 }

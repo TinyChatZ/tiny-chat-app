@@ -48,7 +48,7 @@ function onMouseMoveEvent(_event: MouseEvent, type: 'over' | 'out' | 'down' | 'u
           </div>
         </div>
       </div>
-      <div class="mt-2 flex flex-row-reverse">
+      <div class="mt-2 flex">
         <session-toolbar :select-item-hooks="pros.onClickHook"></session-toolbar>
       </div>
     </div>
