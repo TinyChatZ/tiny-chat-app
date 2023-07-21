@@ -67,7 +67,7 @@ function buildCodeBlock(str: string, lang?: string, other?: string): string {
 
 <template>
   <!--eslint-disable-next-line vue/no-v-html-->
-  <div v-html="content"></div>
+  <div class="break-all" v-html="content"></div>
 </template>
 
 <!-- 此处需要global样式 -->

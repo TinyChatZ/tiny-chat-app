@@ -1,5 +1,8 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
 import { type SettingType } from '../main/types/SettingType'
+import { ChatSessionIndexType, ChatSessionItemType } from '@shared/chat/ChatSessionType'
+import { Clipboard } from 'electron'
+import { TinyResult } from '@shared/common/TinyResult'
 
 declare global {
   interface RpcResult<T> {
@@ -12,6 +15,7 @@ declare global {
   }
   interface Window {
     electron: ElectronAPI
+    electronClipboard: Clipboard
     api: {
       /**
        * 修改chat界面的尺寸
@@ -52,6 +56,24 @@ declare global {
 
       /**获取系统可用字体 */
       getSysFontFamilies: () => Promise<Array<string>>
+
+      /** 修改窗口是否忽略鼠标事件，但是不忽略移动事件 */
+      setIgnoreMouseEvent: (ignore: boolean) => void
+
+      /** 是否让窗口跟着鼠标走；这是网上大佬教的鼠标拖拽方式😂 */
+      windowMove: (move: 'move' | 'end' | 'heartBeat', windowName: string) => void
+
+      /** 初始化chatSession */
+      initChatSessiontIndex: () => Promise<TinyResult<Map<string, ChatSessionIndexType>>>
+
+      /** 获取/创建一个chatSession详情 */
+      getChatSessionItem: (id?: string) => Promise<TinyResult<ChatSessionItemType>>
+
+      /** 修改/删除一个chatSession详情 */
+      modifyChatSessionItem: (
+        item: ChatSessionItemType,
+        op: 'update' | 'delete'
+      ) => Promise<TinyResult<ChatSessionItemType>>
     }
     handler: {
       /**
@@ -60,6 +82,20 @@ declare global {
        * @returns
        */
       updateSettingState: (callback: (e, value) => SettingType) => unknown
+      /**
+       * 在渲染进程中监听ChatSession修改回调
+       * @param callback 新数据的回调，由main发送
+       * @returns void
+       */
+      updateChatSessionState: (
+        callback: (
+          e,
+          value
+        ) => {
+          index: Map<string, ChatSessionIndexType>
+          detail: Map<string, ChatSessionItemStorageType>
+        }
+      ) => unknown
     }
   }
 }

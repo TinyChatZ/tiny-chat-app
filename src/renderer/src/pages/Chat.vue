@@ -1,29 +1,21 @@
 <script setup lang="ts">
-import { NButton, NCollapseTransition } from 'naive-ui'
-import { ref } from 'vue'
+import { useMessage } from 'naive-ui'
 import MainChat from '@renderer/components/chat/MainChat.vue'
-import Setting from '@renderer/components/Setting.vue'
-const showState = ref(true)
-const showDialog = (): void => {
-  showState.value = !showState.value
-  window.api.resize(showState.value)
-}
+import { useSettingStore } from '@renderer/stores/SettingStore'
+import { TinyResultUiMessageHandler, TinyResultUtils } from '@renderer/utils/TinyResultUtils'
+import ChatTitleBar from '@renderer/components/chat/ChatTitleBar.vue'
+const settingStore = useSettingStore()
+
+// 设置全局默认异常处理为naive-ui
+const defaultHandler = new TinyResultUiMessageHandler(useMessage())
+TinyResultUtils.defaultHandler = defaultHandler
 </script>
 
 <template>
-  <div class="flex flex-col h-full">
-    <div class="p-3 content-center flex items-center" style="-webkit-app-region: drag">
-      <!-- 主要图标 -->
-      <NButton style="-webkit-app-region: no-drag" size="large" circle @click="showDialog">
-        <img src="@renderer/assets/icons/icon-grey.png" style="width: 100%; height: auto;" />
-      </NButton>
-      <div class="inline-block text-xl pl-2 select-none" style="line-height: 40px">TinyChat</div>
-      <!-- 配置界面，刷新和修改 -->
-      <n-collapse-transition class="ml-4" :show="showState">
-        <setting />
-      </n-collapse-transition>
-    </div>
-    <div v-show="showState" style="height: 90%">
+  <div class="h-full">
+    <!-- 标题头组件 -->
+    <ChatTitleBar />
+    <div v-show="settingStore.showDialogState" style="height: 90%">
       <main-chat ref="mainChat" />
     </div>
   </div>
@@ -31,11 +23,16 @@ const showDialog = (): void => {
 
 <style lang="less">
 body {
-  // -webkit-app-region: drag;
   height: 100vh;
 }
+// 参考大佬的解决方案我们不再使用拖拽css
+// button {
+//   -webkit-app-region: no-drag;
+// }
 
-button {
-  -webkit-app-region: no-drag;
-}
+// .dragable {
+//   -webkit-app-region: drag;
+//   // todo 为什么这样会无效
+//   // cursor: move;
+// }
 </style>

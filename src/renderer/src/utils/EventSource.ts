@@ -15,7 +15,7 @@ interface EventSourceResult<T> {
 export async function getEventSource<T>(
   url: string,
   options: EventSourceOptions,
-  onMessage: (data: EventSourceResultData<T>) => void
+  onMessage?: (data: EventSourceResultData<T>) => void
 ): Promise<EventSourceResult<T>> {
   const result: Array<EventSourceResultData<T>> = []
   const response = await fetch(url, {

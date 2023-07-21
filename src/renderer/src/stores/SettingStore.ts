@@ -2,8 +2,29 @@ import { defineStore } from 'pinia'
 import { type SettingType, getDefaultSetting } from '@shared/config/SettingType'
 import { useMessage } from 'naive-ui'
 
+/** 一些运行时共享的状态，无需持久化 */
+export interface RuntimeSettingParams {
+  /** 是否展示完整对话界面 */
+  showDialogState: boolean
+  runtime: {
+    systemInfo: Map<string, string>
+  }
+}
+
+function getDefaultRunTimeSettingParam(): RuntimeSettingParams {
+  return {
+    showDialogState: true,
+    runtime: {
+      systemInfo: new Map()
+    }
+  }
+}
+
 const useSettingStore = defineStore('setting', {
-  state: (): SettingType => getDefaultSetting(),
+  state: (): SettingType & RuntimeSettingParams => ({
+    ...getDefaultSetting(),
+    ...getDefaultRunTimeSettingParam()
+  }),
   getters: {
     getUrl(): string {
       return this.chatgpt?.proxy?.address || 'https://api.openai.com' + '/v1/chat/completions'
@@ -35,6 +56,9 @@ const useSettingStore = defineStore('setting', {
      *
      */
     async initSettingParams(): Promise<RpcResult<SettingType>> {
+      // 获取系统信息
+      this.runtime.systemInfo = await window.api.getSysInfo()
+      // 获取配置信息
       const res = await this.getSettingParams()
       initData = JSON.parse(JSON.stringify(this.cloneNewSetting()))
       return Promise.resolve(res)

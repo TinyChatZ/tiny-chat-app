@@ -18,7 +18,8 @@ export class ChatWindow extends AbstractWindow {
         screen.getPrimaryDisplay().workAreaSize.width - 450,
       y: setParam?.general?.windowPosition?.height ?? 50,
       frame: false, // 无窗口
-      transparent: false, // 透明
+      transparent: true, // 设置为透明窗口
+      backgroundColor: '#00000000', // 设置背景颜色为透明色
       fullscreenable: false, //禁止全屏
       resizable: true, // 禁止修改窗口大小
       alwaysOnTop: setParam?.general?.windowTop ?? false,

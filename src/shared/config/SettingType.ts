@@ -29,6 +29,20 @@ interface SettingChatgptType {
     address: string
     /** 代理服务token */
     param: string
+    /** 是否在请求是使用代理 */
+    useProxy: boolean
+  }
+  /** 会话管理 */
+  session: {
+    /** 保存路径 */
+    savePath: string
+    /** 保存文件前缀 */
+    savePrefix: string
+  }
+  /** 系统内置的指令 */
+  prompts: {
+    /** 生成标题的指令 */
+    generateTitle: string
   }
 }
 /** 通用设置 */
@@ -39,6 +53,13 @@ interface SettingGeneralType {
   windowTop: boolean
   /** 保存窗口位置 */
   saveWindowPosition: boolean
+  /** 缩略模式单击唤醒session;默认为false，即鼠标悬停就打开 */
+  sessionWakeUp: {
+    /** 缩略图模式触发 */
+    thumbnall: 'click' | 'hover'
+    /** session中触发方式 */
+    mainWindow: 'click' | 'hover'
+  }
   /** 窗口尺寸 */
   windowSize: {
     width: number
@@ -95,13 +116,26 @@ const getDefaultSetting = (): SettingType => ({
     },
     proxy: {
       address: '',
-      param: ''
+      param: '',
+      useProxy: false
+    },
+    session: {
+      savePath: '',
+      savePrefix: ''
+    },
+    prompts: {
+      generateTitle:
+        'I need you to play a dialogue title generation role, you should distill the meaning of the dialogue as simple as possible and generate a reasonable title, the length of the title is less than 20 words,you just tell me the result without other thing,also you should use chinese answer me'
     }
   },
   general: {
     displayMode: 'system',
     windowTop: false,
     saveWindowPosition: false,
+    sessionWakeUp: {
+      thumbnall: 'hover',
+      mainWindow: 'click'
+    },
     windowSize: {
       width: 400,
       height: 650
@@ -123,4 +157,4 @@ const getDefaultSetting = (): SettingType => ({
   }
 })
 
-export { type SettingType, getDefaultSetting }
+export { type SettingType, type SettingChatgptType, getDefaultSetting }

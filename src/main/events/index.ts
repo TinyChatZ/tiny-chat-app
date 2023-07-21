@@ -5,7 +5,12 @@ import { SetWindow } from '../windows/SetWindow'
 import { SettingType } from '@shared/config/SettingType'
 import * as SetService from '../services/SetService'
 import { WindowsManageUtils } from '../utils/WindowManageUtils'
+import * as ChatSessionService from '../services/ChatSessionService'
 import * as fontList from 'font-list'
+import { ChatSessionItemType } from '@shared/chat/ChatSessionType'
+import { WindowMove } from '../utils/WindowControlUtils'
+import { TinyResultBuilder } from '@shared/common/TinyResult'
+import { StatusCode } from '@shared/common/StatusCode'
 export default function registerEvent(): void {
   // Public
 
@@ -44,9 +49,12 @@ export default function registerEvent(): void {
     const webContents = event.sender
     const win = BrowserWindow.fromWebContents(webContents)
     if (flag) {
-      const setParam = SetService.getCacheSettingParams()
-      win?.setSize(setParam.general.windowSize.width, setParam.general.windowSize.height, true)
-    } else win?.setSize(150, 64, true)
+      // const setParam = SetService.getCacheSettingParams()
+      // win?.setSize(setParam.general.windowSize.width, setParam.general.windowSize.height, true)
+      win?.setSkipTaskbar(true)
+    } else {
+      win?.setSkipTaskbar(false)
+    }
   })
 
   /**
@@ -82,4 +90,66 @@ export default function registerEvent(): void {
   ipcMain.handle('set:getSysFontFamilies', async () => {
     return [...new Set(await fontList.getFonts())]
   })
+
+  /**
+   * 配置是否允许捕获鼠标时间
+   *
+   * 用于处理窗口隐藏是忽略鼠标事件行为
+   */
+  ipcMain.on('chat:setIgnoreMouseEvent', (event, ignore) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.setIgnoreMouseEvents(ignore, { forward: true })
+  })
+
+  ipcMain.on(
+    'common:windowMove',
+    (_event, move: 'move' | 'end' | 'heartBeat', windowId: string) => {
+      const window = WindowsManageUtils.getByName(windowId)
+      if (window) {
+        const windowMove = WindowMove.getInstance(window)
+        if (move === 'move') windowMove.startMove()
+        else if (move === 'end') windowMove.endMove()
+        else if (move === 'heartBeat') windowMove.heartBeat()
+      }
+    }
+  )
+
+  /**
+   * 初始化chatSessionIndex
+   *
+   * renderer首次加载ChatSessionStore是调用此方法，获取索引
+   */
+  ipcMain.handle('chatsession:initChatSessionIndex', async () => {
+    return await ChatSessionService.getIndexMap()
+  })
+
+  /**
+   * 创建或者加载一个SessionIndex
+   */
+  ipcMain.handle('chatsession:getChatSessionItem', async (_event, id?: string) => {
+    if (!id) {
+      id = await ChatSessionService.saveIndexItem()
+    }
+    const result = await ChatSessionService.getChatSessionItem(id)
+    if (result) return TinyResultBuilder.buildSuccess(result)
+    else return TinyResultBuilder.buildException(StatusCode.E20006)
+  })
+  /** 修改/删除一个chatSession详情 */
+  ipcMain.handle(
+    'chatsession:modifyChatSessionItem',
+    async (_event, item: ChatSessionItemType, op: 'update' | 'delete') => {
+      if (op === 'delete') {
+        const result = await ChatSessionService.dropChatSessionItem(item.id)
+        if (result) {
+          return TinyResultBuilder.buildSuccess(item)
+        } else return TinyResultBuilder.buildException(StatusCode.E20004)
+      } else if (op === 'update') {
+        const result = await ChatSessionService.saveIndexItem(item)
+        if (result === '-1') return TinyResultBuilder.buildException(StatusCode.E20004)
+      } else {
+        return TinyResultBuilder.buildException(StatusCode.E20005)
+      }
+      return TinyResultBuilder.buildSuccess(item)
+    }
+  )
 }

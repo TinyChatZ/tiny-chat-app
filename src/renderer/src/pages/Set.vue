@@ -2,6 +2,7 @@
 import { useSettingStore } from '@renderer/stores/SettingStore'
 import {
   NCard,
+  NThing,
   NAnchor,
   NAnchorLink,
   NForm,
@@ -17,10 +18,13 @@ import {
   NPopconfirm,
   NCollapseTransition,
   NSpin,
-  useMessage
+  useMessage,
+  NIcon
 } from 'naive-ui'
 import { ref, onMounted, watch } from 'vue'
-import { SettingType, getDefaultSetting } from '@shared/config/SettingType'
+import { SettingType, SettingChatgptType, getDefaultSetting } from '@shared/config/SettingType'
+import IconMain from '@renderer/components/icons/IconMain.vue'
+import GithubButton from 'vue-github-button'
 
 const settingStore = useSettingStore()
 const message = useMessage()
@@ -33,8 +37,6 @@ const loading = ref(true)
 // 是否显示代理
 const showProxy = ref(false)
 onMounted(async () => {
-  const res = await settingStore.initSettingParams()
-  if (!res.success) message.error('无法加载配置')
   formValue.value = settingStore.cloneNewSetting()
   showProxy.value =
     formValue.value.chatgpt.proxy && formValue.value.chatgpt.proxy.address ? true : false
@@ -47,7 +49,6 @@ watch(
   formValue,
   async () => {
     // TODO 最好添加节流，否则每次都会请求
-    console.log(formValue.value.general.fontSize)
     settingStore.setSettingParams(formValue.value)
   },
   { deep: true }
@@ -87,6 +88,74 @@ onMounted(async () => {
     sysFontFamiliesLoading.value = false
   }
 })
+
+// 处理All In One配置
+const allInOneConfigData = ref('')
+const allInOneLoading = ref(false)
+const allInOneButtonText = ref('生成配置')
+const allInOneConfigInputLoading = ref(false)
+// 生成AllInOne配置
+function generateAllInOneConfig(): void {
+  allInOneLoading.value = true
+  try {
+    const json = JSON.stringify(settingStore.chatgpt)
+    window.electronClipboard.writeText(window.btoa(json))
+    message.success('生成成功已复制到剪切板')
+  } catch {
+    message.error('生成位置异常')
+  } finally {
+    allInOneLoading.value = false
+    allInOneButtonText.value = '✔️'
+    setTimeout(() => (allInOneButtonText.value = '生成配置'), 1000)
+  }
+}
+// 监听修改
+watch(allInOneConfigData, (newValue) => {
+  if (newValue) {
+    allInOneConfigInputLoading.value = true
+    setTimeout(() => {
+      try {
+        const json = JSON.parse(decodeURIComponent(window.atob(newValue)))
+        const gptConfig: SettingChatgptType = getDefaultSetting().chatgpt
+        if (json.token) gptConfig.token = json.token
+
+        if (json.options && json.options.limitsLength)
+          gptConfig.options.limitsLength = json.options.limitsLength
+
+        if (json.options && json.options.limitsBehavior)
+          gptConfig.options.limitsBehavior = json.options.limitsBehavior
+
+        if (json.options && json.options.limitsCalculate)
+          gptConfig.options.limitsCalculate = json.options.limitsCalculate
+
+        if (json.proxy && json.proxy.address) gptConfig.proxy.address = json.proxy.address
+
+        if (json.proxy && json.proxy.param) gptConfig.proxy.param = json.proxy.param
+
+        if (json.proxy && json.proxy.useProxy) gptConfig.proxy.useProxy = json.proxy.useProxy
+
+        if (json.session && json.session.savePath)
+          gptConfig.session.savePath = json.session.savePath
+
+        if (json.session && json.session.savePrefix)
+          gptConfig.session.savePrefix = json.session.savePrefix
+
+        if (json.prompts && json.prompts.generateTitle)
+          gptConfig.prompts.generateTitle = json.prompts.generateTitle
+
+        formValue.value.chatgpt = gptConfig
+        message.success('解析成功')
+      } catch (e) {
+        console.error(e)
+        message.error('解析失败，请检查格式')
+      } finally {
+        allInOneConfigInputLoading.value = false
+        allInOneConfigData.value = ''
+      }
+    }, 500)
+  }
+})
+
 // Hash模式下锚点定位兼容性代码
 function gotoHash(id: string): void {
   const target = document.querySelector(id)
@@ -144,6 +213,24 @@ function gotoHash(id: string): void {
                 <n-form-item label="保留窗口位置">
                   <n-switch v-model:value="formValue.general.saveWindowPosition" />
                 </n-form-item>
+                <n-form-item label="多会话唤醒方式">
+                  <div class="flex flex-col gap-y-5">
+                    <div class="flex gap-x-2 items-center">
+                      <div>主窗口图标唤醒方式：</div>
+                      <n-radio-group v-model:value="formValue.general.sessionWakeUp.mainWindow">
+                        <n-radio-button value="click">鼠标单击</n-radio-button>
+                        <n-radio-button value="hover">鼠标hover</n-radio-button>
+                      </n-radio-group>
+                    </div>
+                    <div v-show="false" class="flex gap-x-2">
+                      <div>缩略图图标唤醒方式：</div>
+                      <n-radio-group v-model:value="formValue.general.sessionWakeUp.thumbnall">
+                        <n-radio-button value="click">鼠标单击</n-radio-button>
+                        <n-radio-button value="hover">鼠标hover</n-radio-button>
+                      </n-radio-group>
+                    </div>
+                  </div>
+                </n-form-item>
                 <n-form label="窗口大小" label-placement="left">
                   <div class="flex gap-x-2">
                     <n-form-item label="宽度">
@@ -186,54 +273,75 @@ function gotoHash(id: string): void {
             </n-card>
 
             <!-- chagpt配置卡片 -->
-            <n-card id="chatgpt" title="ChatGPT">
-              <n-form>
-                <n-form-item label="OpenAI Token"
-                  ><n-input
-                    v-model:value="formValue.chatgpt.token"
-                    placeholder="这是OpenAI官网中生成的token"
-                /></n-form-item>
-                <n-form-item label="文本限制长度(500-5000)">
-                  <n-input-number
-                    v-model:value="formValue.chatgpt.options.limitsLength"
-                    max="5000"
-                    min="500"
-                    step="500"
-                    placeholder="限制文本长度默认为5000"
-                  />
-                </n-form-item>
-                <n-form-item label="文本限制策略">
-                  <n-radio-group v-model:value="formValue.chatgpt.options.limitsBehavior">
-                    <n-radio-button value="failSafe">忽略早期内容</n-radio-button>
-                    <n-radio-button value="failFast">提示错误</n-radio-button>
-                  </n-radio-group>
-                </n-form-item>
-                <n-collapse-transition
-                  :show="formValue.chatgpt.options.limitsBehavior === 'failSafe'"
-                >
-                  <n-form-item label="文本限制计量">
-                    <n-radio-group v-model:value="formValue.chatgpt.options.limitsCalculate">
-                      <n-radio-button value="character">按字符计算</n-radio-button>
-                      <n-radio-button value="block">按问答计算</n-radio-button>
+            <n-card id="chatgpt">
+              <n-thing title="ChatGPT">
+                <template #header-extra>
+                  <n-button text :loading="allInOneLoading" @click="generateAllInOneConfig">
+                    {{ allInOneButtonText }}
+                  </n-button>
+                </template>
+                <n-form>
+                  <n-form-item label="All In One 配置">
+                    <n-input
+                      v-model:value="allInOneConfigData"
+                      :loading="allInOneConfigInputLoading"
+                      type="textarea"
+                      placeholder="如何有人给你提供了All In One Token，你可以直接把这段话粘贴到这里"
+                    />
+                  </n-form-item>
+                  <n-form-item label="OpenAI Token"
+                    ><n-input
+                      v-model:value="formValue.chatgpt.token"
+                      placeholder="这是OpenAI官网中生成的token"
+                  /></n-form-item>
+                  <n-form-item label="文本限制长度(500-5000)">
+                    <n-input-number
+                      v-model:value="formValue.chatgpt.options.limitsLength"
+                      max="5000"
+                      min="500"
+                      step="500"
+                      placeholder="限制文本长度默认为5000"
+                    />
+                  </n-form-item>
+                  <n-form-item label="文本限制策略">
+                    <n-radio-group v-model:value="formValue.chatgpt.options.limitsBehavior">
+                      <n-radio-button value="failSafe">忽略早期内容</n-radio-button>
+                      <n-radio-button value="failFast">提示错误</n-radio-button>
                     </n-radio-group>
                   </n-form-item>
-                </n-collapse-transition>
-                <n-form-item label="代理:是否使用代理模式">
-                  <n-switch v-model:value="showProxy" />
-                </n-form-item>
-                <n-collapse-transition :show="showProxy">
-                  <n-form-item label="代理地址"
-                    ><n-input
-                      v-model:value="formValue.chatgpt.proxy.address"
-                      placeholder="请输入代理地址"
-                  /></n-form-item>
-                  <n-form-item label="代理Token"
-                    ><n-input
-                      v-model:value="formValue.chatgpt.proxy.param"
-                      placeholder="请输入代理token"
-                  /></n-form-item>
-                </n-collapse-transition>
-              </n-form>
+                  <n-collapse-transition
+                    :show="formValue.chatgpt.options.limitsBehavior === 'failSafe'"
+                  >
+                    <n-form-item label="文本限制计量">
+                      <n-radio-group v-model:value="formValue.chatgpt.options.limitsCalculate">
+                        <n-radio-button value="character">按字符计算</n-radio-button>
+                        <n-radio-button value="block">按问答计算</n-radio-button>
+                      </n-radio-group>
+                    </n-form-item>
+                  </n-collapse-transition>
+                  <n-form-item label="Prompt:标题生成（除非你有更好的否则请不要修改）">
+                    <n-input
+                      v-model:value="formValue.chatgpt.prompts.generateTitle"
+                      type="textarea"
+                    ></n-input>
+                  </n-form-item>
+                  <n-form-item label="代理:是否使用代理模式">
+                    <n-switch v-model:value="formValue.chatgpt.proxy.useProxy" />
+                  </n-form-item>
+                  <n-collapse-transition :show="formValue.chatgpt.proxy.useProxy">
+                    <n-form-item label="代理地址"
+                      ><n-input
+                        v-model:value="formValue.chatgpt.proxy.address"
+                        placeholder="请输入代理地址"
+                    /></n-form-item>
+                    <n-form-item label="代理Token"
+                      ><n-input
+                        v-model:value="formValue.chatgpt.proxy.param"
+                        placeholder="请输入代理token"
+                    /></n-form-item>
+                  </n-collapse-transition>
+                </n-form>
+              </n-thing>
             </n-card>
 
             <!-- 快捷键卡片 -->
@@ -272,28 +380,71 @@ function gotoHash(id: string): void {
 
             <!-- 关于 -->
             <n-card id="about" title="关于（About）" style="min-height: 400px" class="align-middle">
-              <div class="grid grid-cols-6 place-items-center">
+              <div class="flex flex-col items-center">
                 <!-- 图标 -->
-                <div class="col-start-2 col-span-4">
-                  <img src="@renderer/assets/icons/main-icon.svg" />
+                <div class="p-2 bg-white rounded-lg" style="width: 48px; height: 48px">
+                  <n-icon size="48">
+                    <icon-main />
+                  </n-icon>
                 </div>
                 <!-- 简介 -->
-                <div class="col-start-2 col-span-4">
-                  <p></p>
+                <div>
+                  <p>TinyChat是一个AI对话应用由ChatGPT驱动</p>
+                </div>
+                <div class="flex gap-x-2">
+                  <!-- Place this tag where you want the button to render. -->
+                  <github-button
+                    href="https://github.com/TinyChatZ/tiny-chat-app"
+                    data-color-scheme="no-preference: light; light: light; dark: dark;"
+                    data-icon="octicon-star"
+                    data-size="large"
+                    data-show-count="true"
+                    aria-label="Star TinyChatZ/tiny-chat-app on GitHub"
+                    >Star</github-button
+                  >
+                  <!-- Place this tag where you want the button to render. -->
+                  <github-button
+                    href="https://github.com/TinyChatZ/tiny-chat-app/issues"
+                    data-color-scheme="no-preference: light; light: light; dark: dark;"
+                    data-icon="octicon-issue-opened"
+                    data-size="large"
+                    data-show-count="true"
+                    aria-label="Issue TinyChatZ/tiny-chat-app on GitHub"
+                    >Issue</github-button
+                  >
+                  <!-- Place this tag where you want the button to render. -->
+                  <github-button
+                    href="https://github.com/TinyChatZ/tiny-chat-app/releases"
+                    data-color-scheme="no-preference: light; light: light; dark: dark;"
+                    data-icon="octicon-download"
+                    data-size="large"
+                    aria-label="Download TinyChatZ/tiny-chat-app on GitHub"
+                    >Download</github-button
+                  >
+                  <!-- Place this tag where you want the button to render. -->
+                  <github-button
+                    href="https://github.com/Jakentop"
+                    data-color-scheme="no-preference: light; light: light; dark: dark;"
+                    data-size="large"
+                    data-show-count="true"
+                    aria-label="Follow @Jakentop on GitHub"
+                    >Follow @Jakentop</github-button
+                  >
                 </div>
                 <!-- 软件信息 -->
-                <div class="col-start-2 col-span-4 content-center">Name: {{ 'TinyChat' }}</div>
-                <div class="col-start-2 col-span-4">Version: {{ sysInfo.get('version') }}</div>
-                <div class="col-start-2 col-span-4">BuildDate: {{ sysInfo.get('buildDate') }}</div>
-                <div class="col-start-2 col-span-4 content-center">
-                  System: {{ sysInfo.get('systemVersion') }}
+                <div class="mt-10 flex gap-x-2">
+                  <div>Name: {{ 'TinyChat' }}</div>
+                  <div>Version: {{ sysInfo.get('version') }}</div>
                 </div>
-                <div class="col-start-2 col-span-4">Node: {{ sysInfo.get('nodeVersion') }}</div>
-                <div class="col-start-2 col-span-4">
-                  Electron: {{ sysInfo.get('electronVersion') }}
+                <!-- <div class="col-start-2 col-span-4">BuildDate: {{ sysInfo.get('buildDate') }}</div> -->
+                <div>System: {{ sysInfo.get('systemVersion') }}</div>
+                <div class="flex gap-x-2">
+                  <div>Node: {{ sysInfo.get('nodeVersion') }}</div>
+                  <div>Electron: {{ sysInfo.get('electronVersion') }}</div>
+                  <div>Chrome: {{ sysInfo.get('chromeVersion') }}</div>
                 </div>
-                <div class="col-start-2 col-span-4">Chrome: {{ sysInfo.get('chromeVersion') }}</div>
-
+              </div>
+              <div class="m-10 grid grid-cols-6 place-items-center">
                 <div class="col-start-2 col-span-4 flex gap-x-2">
                   开发者模式：<n-switch v-model:value="formValue.other.devMode" />
                 </div>

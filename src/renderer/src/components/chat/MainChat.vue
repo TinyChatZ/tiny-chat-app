@@ -1,25 +1,16 @@
 <script setup lang="ts">
-import {
-  NInput,
-  NList,
-  NListItem,
-  NScrollbar,
-  NSpin,
-  useMessage,
-  NButton,
-  NButtonGroup
-} from 'naive-ui'
-import { ref, VNodeRef, computed } from 'vue'
-import { getEventSource } from '@renderer/utils/EventSource'
-import { useChatgptStore } from '@renderer/stores/ChatgptStore'
+import { NInput, NList, NListItem, NSpin, useMessage, NButton, NButtonGroup } from 'naive-ui'
+import { ref, computed, watch } from 'vue'
+import { chatgptStoreFactory, useChatgptStore } from '@renderer/stores/ChatgptStore'
 import { useSettingStore } from '@renderer/stores/SettingStore'
 import MainChatItem from './MainChatItem.vue'
 import { mapWritableState } from 'pinia'
+import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
 
 // 获取消息打印的实例
 const message = useMessage()
 
-const chatgptStore = useChatgptStore()
+const chatSessionStore = useChatSessionStore()
 const settingStore = useSettingStore()
 settingStore.getSettingParams()
 
@@ -29,67 +20,65 @@ const question = ref('')
 // 对话框是否展示加载
 const loading = ref(false)
 
-// 聊天记录数据
-// const data: Ref<Array<{ role?: string; content?: string; date?: Date }>> = ref([])
-const data = computed(() => ({ ...mapWritableState(useChatgptStore, ['chatList']) }))
+// 定一个默认的store，即使main出现问题，也可以正常展示一个临时的store
+let chatgptStore = useChatgptStore()
+// 聊天记录数据（监听session是否有变化），变化则切换session
+watch(
+  () => chatSessionStore.curChatSessionId,
+  (newValue, oldValue) => {
+    console.log(`changed session from ${oldValue} to ${newValue}`)
+    loading.value = false
+    chatgptStore = useChatgptStore(newValue)
+  },
+  { immediate: true }
+)
 
-// 聊天记录scrollbar
-const scrollbar = ref<VNodeRef>('')
+// 处理data绑定到视图中
+const data = computed(() => ({
+  ...mapWritableState(chatgptStoreFactory(chatSessionStore.curChatSessionId), ['chatList'])
+}))
 
 // 发送事件
 const sendData = async (): Promise<void> => {
   // 如果question为空直接返回不发送
   if (!question.value) return
-  // 添加用户输入的内容
-  chatgptStore.createUserInfo(question.value)
-  setTimeout(() => scrollbar.value.scrollBy({ top: 1000 }), 100)
-
-  question.value = ''
+  const tQuestion = question.value
   loading.value = true
-  // 发送请求
-  const setting = settingStore.chatgpt
-  // 如果拿不到token就配置
-  if (!setting?.token) {
-    message.error('请在设置中配置token')
-    loading.value = false
-    return
-  }
-  try {
-    const { url, options } = chatgptStore.getRequestParam
-    // 设置返回值
-    const position = chatgptStore.createChatListItem('assistant')
-    // 发起EventSource调用
-    getEventSource<{ choices: Array<{ delta: { role?: string; content?: string } }> }>(
-      url,
-      options,
-      // 渲染结果
-      (res) => {
-        if (typeof res.data !== 'string') {
-          if (res.data?.choices[0].delta?.role) {
-            chatgptStore.chatList[chatgptStore.getRealIndex(position)].role =
-              res.data?.choices[0].delta?.role
-          } else if (res.data?.choices[0].delta?.content) {
-            chatgptStore.chatList[chatgptStore.getRealIndex(position)].content +=
-              res.data?.choices[0].delta?.content
-            // @ts-ignore 暂时忽略
-            setTimeout(() => scrollbar.value.scrollBy({ top: 300 }), 100)
-          }
-        }
+  question.value = ''
+  // 注册下拉处理器
+
+  // 发送
+  const res = await chatgptStore.sendChatGPTQuery(tQuestion, (isQuestionCreate: boolean) => {
+    const element = window.document.getElementById('scrollbar')
+    if (element) {
+      if (isQuestionCreate && element.scrollTop + element.clientHeight >= element.scrollHeight - 5)
+        setTimeout(() => element.scrollTo({ behavior: 'smooth', top: element.scrollHeight }), 30)
+      else
+        setTimeout(() => {
+          // 如果垂直便宜量+可视区高度 大于 总高度减去50，代表快到底部了就开始往下滚动
+          if (element.scrollTop + element.clientHeight >= element.scrollHeight - 50)
+            element.scrollTo({ behavior: 'smooth', top: element.scrollHeight })
+        }, 50)
+    }
+  })
+  loading.value = false
+  // 会话请求返回处理
+  if (res.success) {
+    // 是否生成标题
+    if (chatSessionStore.curChatSession && !chatSessionStore.curChatSession.nameGenerate) {
+      const title = await chatgptStore.getChatListRefining()
+      // 持久化结果
+      if (title !== '' && chatSessionStore.curChatSession) {
+        chatSessionStore.curChatSession.nameGenerate = true
+        chatSessionStore.curChatSession.name = title
+        await chatSessionStore.syncSessionInfo(chatSessionStore.curChatSession)
+      } else {
+        message.error('调用未知异常')
+        chatSessionStore.sessionModifyFail(chatSessionStore.curChatSession)
       }
-    )
-      .then(() => {
-        loading.value = false
-        // console.log(chatgptStore.chatList[chatgptStore.getRealIndex(position)])
-      })
-      .catch(() => {
-        chatgptStore.dropChatListItem(position)
-        message.error('调用失败，请检查网络或token')
-        loading.value = false
-      })
-  } catch (e) {
-    message.error(e as string)
-  } finally {
-    loading.value = false
+    }
+  } else {
+    message.error(res.message || '调用未知异常')
   }
 }
 
@@ -103,15 +92,13 @@ const refresh = (): void => {
 
 <template>
   <div class="flex flex-col w-auto h-full">
-    <div class="h-4/5">
-      <n-scrollbar ref="scrollbar">
-        <n-list hoverable clickable>
-          <!-- 聊天记录list -->
-          <n-list-item v-for="item in data.chatList.get()" :key="item.date?.toString()">
-            <MainChatItem :item="item" />
-          </n-list-item>
-        </n-list>
-      </n-scrollbar>
+    <div id="scrollbar" class="h-4/5 overflow-x-hidden overflow-y-auto scrollbar">
+      <n-list hoverable clickable>
+        <!-- 聊天记录list -->
+        <n-list-item v-for="item in data.chatList.get()" :key="item.date?.toString()">
+          <MainChatItem :item="item" />
+        </n-list-item>
+      </n-list>
     </div>
     <div class="h-1/5 p-2 flex space-x-2 items-center">
       <n-spin :show="loading" class="w-full">
@@ -133,7 +120,58 @@ const refresh = (): void => {
       </div>
     </div>
   </div>
-  <!-- 输入token的对话框 -->
 </template>
 
-<style></style>
+<style scoped lang="less">
+// 滚动条相关代码
+.scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  /**/
+}
+
+.scrollbar::-webkit-scrollbar-track {
+  background: rgb(239, 239, 239);
+  border-radius: 3px;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+  background: #bfbfbf;
+  border-radius: 8px;
+}
+
+.scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+.scrollbar::-webkit-scrollbar-corner {
+  background: #179a16;
+}
+
+@media (prefers-color-scheme: dark) {
+  // 滚动条相关代码
+  .scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    /**/
+  }
+
+  .scrollbar::-webkit-scrollbar-track {
+    background: #222;
+    border-radius: 3px;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 8px;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #c0c0c0;
+  }
+
+  .scrollbar::-webkit-scrollbar-corner {
+    background: #179a16;
+  }
+}
+</style>
