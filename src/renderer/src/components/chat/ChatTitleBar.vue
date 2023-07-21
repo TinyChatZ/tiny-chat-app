@@ -186,7 +186,7 @@ function hoverChangeShowDrawer(): void {
     :trap-focus="false"
     :block-scroll="false"
     placement="left"
-    width="85%"
+    style="width: 85%; max-width: 400px"
   >
     <n-drawer-content :native-scrollbar="false">
       <MainChatSessionPanel :on-click-hook="sessionItemSelect"></MainChatSessionPanel>

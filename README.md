@@ -4,7 +4,7 @@
 >
 > 注意需要提供你的 OpenAI key 才可以发起调用，具体可以参考配置，所有的 key 均保存在本地
 
-![你好Hello](https://img.jaken.top/image/你好.gif)
+![Alt text](https://img.jaken.top/image/2023/07/21/09-39-38-9ffcfdeaf91935f0bafc4f7a5fc8b6ae.gif)
 
 ## 安装
 
