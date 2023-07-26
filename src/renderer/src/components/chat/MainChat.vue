@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { NInput, NList, NListItem, NSpin, useMessage, NButton, NButtonGroup } from 'naive-ui'
+import { NInput, NSpin, useMessage, NButton, NButtonGroup } from 'naive-ui'
 import { ref, computed, watch } from 'vue'
 import { chatgptStoreFactory, useChatgptStore } from '@renderer/stores/ChatgptStore'
 import { useSettingStore } from '@renderer/stores/SettingStore'
-import MainChatItem from './MainChatItem.vue'
 import { mapWritableState } from 'pinia'
 import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
-
+import MainChatItem from '@renderer/components/chat/MainChatItem.vue'
 // 获取消息打印的实例
 const message = useMessage()
 
@@ -88,17 +87,30 @@ const refresh = (): void => {
   chatgptStore.createChatListItem('system', '重新开始是很好的……')
   loading.value = false
 }
+// 鼠标移入显示toolbar
+const curMouseEnterId = ref(-1)
+function mouseEnterItem(id: number): void {
+  curMouseEnterId.value = id
+}
 </script>
 
 <template>
   <div class="flex flex-col w-auto h-full">
-    <div id="scrollbar" class="h-4/5 overflow-x-hidden overflow-y-auto scrollbar">
-      <n-list hoverable clickable>
-        <!-- 聊天记录list -->
-        <n-list-item v-for="item in data.chatList.get()" :key="item.date?.toString()">
+    <div
+      id="scrollbar"
+      class="flex-col h-4/5 overflow-x-hidden overflow-y-auto scrollbar divide-y divide-neutral-200 dark:divide-neutral-800"
+    >
+      <!-- 聊天记录list -->
+      <div v-for="item in data.chatList.get()" :key="item.date?.toString()">
+        <MainChatItem
+          :item="item"
+          :show-toolbar="item.id === curMouseEnterId"
+          @mouseenter="mouseEnterItem(item.id)"
+        />
+      </div>
+      <!-- <n-list-item v-for="item in data.chatList.get()" :key="item.date?.toString()">
           <MainChatItem :item="item" />
-        </n-list-item>
-      </n-list>
+        </n-list-item> -->
     </div>
     <div class="h-1/5 p-2 flex space-x-2 items-center">
       <n-spin :show="loading" class="w-full">

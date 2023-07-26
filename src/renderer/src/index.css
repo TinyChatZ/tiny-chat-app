@@ -1,6 +1,5 @@
 /* ./src/index.css */
-@tailwind components;
-@tailwind utilities;
+
 
 /* 滚动条 */
 .code_scrollbar::-webkit-scrollbar {

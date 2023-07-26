@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { ChatItem } from '@shared/chat/ChatType'
+import { useChatgptStore } from '@renderer/stores/ChatgptStore'
 import MarkdownRender from '@renderer/components/markdown/MarkdownRender.vue'
 import MainChatItemToolBar from './MainChatItemToolBar.vue'
-import { useChatgptStore } from '@renderer/stores/ChatgptStore'
 import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
-import { useMessage } from 'naive-ui'
+import { NPopover, useMessage } from 'naive-ui'
 import { ref } from 'vue'
 import MainChatItemStatusIcon from '../icons/MainChatItemStatusIcon.vue'
-
 // 用于管理MainChatList
 const chatSession = useChatSessionStore()
 
@@ -16,7 +15,6 @@ const message = useMessage()
 // 外部传递props
 const props = defineProps<{
   item: ChatItem
-  showToolbar: boolean
 }>()
 // popover展示
 const toolbarPopover = ref()
@@ -41,39 +39,29 @@ const action = ref({
   }
 })
 </script>
+
 <template>
   <div
     :class="{
-      flex: true,
-      'flex-col': true,
-      'p-3': true,
-      'bg-slate-50': props.item.role === 'user',
-      'bg-slate-100': props.item.role === 'assistant',
-      'dark:bg-neutral-950': props.item.role === 'user',
-      'dark:bg-neutral-900': props.item.role === 'assistant'
+      'bg-white': props.item.role === 'user',
+      'dark:bg-neutral-800': props.item.role === 'user',
+      'bg-neutral-100': props.item.role === 'assistant',
+      'dark:bg-neutral-900': props.item.role === 'assistant',
+      'font-medium': props.item.role === 'user',
+      'p-3': true
     }"
-    style="min-height: 3rem"
   >
-    <div class="flex">
-      <!-- 图标 -->
-      <div class="w-6 h-6 mr-3">
-        <main-chat-item-status-icon :role="props.item.role" />
-      </div>
-
-      <!-- markdown -->
-      <div class="mr-1 markdown-render">
-        <markdown-render :source="props.item.content" />
-      </div>
+    <div class="flex flex-row-reverse items-center">
+      <n-popover placement="left">
+        <template #trigger>
+          <div class="w-3 h-3 opacity-90">
+            <MainChatItemStatusIcon :role="props.item.role" />
+          </div>
+        </template>
+        <main-chat-item-tool-bar :action="action" />
+      </n-popover>
     </div>
-
-    <div class="flex flex-row-reverse">
-      <div class="h-6 w-1"></div>
-      <main-chat-item-tool-bar v-show="props.showToolbar" :action="action" />
-    </div>
+    <markdown-render :source="props.item.content" />
   </div>
 </template>
-<style scoped lang="less">
-.markdown-render {
-  width: calc(100vw - 5rem);
-}
-</style>
+<style scoped></style>
