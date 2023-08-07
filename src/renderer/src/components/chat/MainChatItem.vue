@@ -18,8 +18,7 @@ const props = defineProps<{
   item: ChatItem
   showToolbar: boolean
 }>()
-// popover展示
-const toolbarPopover = ref()
+
 // 行为用于toolbar
 const action = ref({
   copy() {
@@ -37,18 +36,23 @@ const action = ref({
       console.log(e)
       message.error('没有删除成功')
     }
-    toolbarPopover.value.setShow(false)
   }
 })
 </script>
 <template>
+  <div v-if="props.item.role === 'system'">
+    <div class="text-center p-3 text-neutral-400 dark:text-neutral-600 select-none">
+      {{ props.item.content }}
+    </div>
+  </div>
   <div
+    v-else
     :class="{
       flex: true,
       'flex-col': true,
       'p-3': true,
-      'bg-slate-50': props.item.role === 'user',
-      'bg-slate-100': props.item.role === 'assistant',
+      'bg-neutral-50': props.item.role === 'user',
+      'bg-neutral-100': props.item.role === 'assistant',
       'dark:bg-neutral-950': props.item.role === 'user',
       'dark:bg-neutral-900': props.item.role === 'assistant'
     }"
@@ -72,7 +76,7 @@ const action = ref({
     </div>
   </div>
 </template>
-<style scoped lang="less">
+<style scoped>
 .markdown-render {
   width: calc(100vw - 5rem);
 }

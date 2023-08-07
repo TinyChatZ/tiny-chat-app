@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NPopover, NScrollbar, NEl, NIcon, NEllipsis, NDrawer, NDrawerContent } from 'naive-ui'
+import { NPopover, NScrollbar, NEl, NEllipsis, NDrawer, NDrawerContent } from 'naive-ui'
 import SessionList from '@renderer/components/session/SessionList.vue'
 import SessionToolbar from '@renderer/components/session/SessionToolbar.vue'
 import IconMain from '@renderer/components/icons/IconMain.vue'
@@ -28,11 +28,13 @@ watch(
     if (showDialogState) {
       document.body.classList.remove('body-transparent')
       isIgnoreMouseEvent = false
-      window.api.resize(!showDialogState)
+      // fix 非置顶缩小窗口消失
+      // window.api.resize(!showDialogState)
     } else if (!showDialogState) {
       document.body.classList.add('body-transparent')
       isIgnoreMouseEvent = true
-      window.api.resize(!showDialogState)
+      // fix 非置顶缩小窗口消失
+      // window.api.resize(!showDialogState)
     }
     // 如果鼠标进入可拖动区域，捕获鼠标事件
     isIgnoreMouseEvent = !mouseEnterDrag
@@ -140,14 +142,12 @@ function hoverChangeShowDrawer(): void {
       >
         <template #trigger>
           <div
-            class="rounded-full inline-block hover:cursor-pointer p-1"
+            class="rounded-full inline-block hover:cursor-pointer"
             style="width: 41px; height: 41px"
             @click="changeShowDrawer"
             @mouseenter="hoverChangeShowDrawer"
           >
-            <n-icon size="41">
-              <icon-main />
-            </n-icon>
+            <icon-main />
           </div>
         </template>
         <n-scrollbar class="mt-4" style="max-height: 40vh">

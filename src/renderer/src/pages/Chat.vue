@@ -21,18 +21,8 @@ TinyResultUtils.defaultHandler = defaultHandler
   </div>
 </template>
 
-<style lang="less">
+<style>
 body {
   height: 100vh;
 }
-// 参考大佬的解决方案我们不再使用拖拽css
-// button {
-//   -webkit-app-region: no-drag;
-// }
-
-// .dragable {
-//   -webkit-app-region: drag;
-//   // todo 为什么这样会无效
-//   // cursor: move;
-// }
 </style>

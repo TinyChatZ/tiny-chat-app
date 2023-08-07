@@ -103,4 +103,4 @@ const showDialog = (): void => {
     <n-button quaternary @click="eixtProgram">退出</n-button>
   </div>
 </template>
-<style lang="less" scoped></style>
+<style  scoped></style>

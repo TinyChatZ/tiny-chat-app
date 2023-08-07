@@ -12,4 +12,4 @@ import MessageDialog from '@renderer/components/MessageDialog.vue'
   </message-dialog>
 </template>
 
-<style lang="less"></style>
+<style></style>

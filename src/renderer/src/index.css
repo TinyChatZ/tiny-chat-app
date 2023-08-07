@@ -5,7 +5,6 @@
 .code_scrollbar::-webkit-scrollbar {
   width: 10px;
   height: 10px;
-  /**/
 }
 
 .code_scrollbar::-webkit-scrollbar-track {

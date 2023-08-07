@@ -193,8 +193,8 @@ function gotoHash(id: string): void {
         </n-anchor>
       </n-card>
     </div>
-    <div class="col-span-9">
-      <n-scrollbar class="h-screen">
+    <div class="col-span-9 h-screen">
+      <n-scrollbar>
         <n-spin :show="loading">
           <n-card :bordered="false">
             <!-- 通用卡片 -->
@@ -382,8 +382,11 @@ function gotoHash(id: string): void {
             <n-card id="about" title="关于（About）" style="min-height: 400px" class="align-middle">
               <div class="flex flex-col items-center">
                 <!-- 图标 -->
-                <div class="p-2 bg-white rounded-lg" style="width: 48px; height: 48px">
-                  <n-icon size="48">
+                <div
+                  class="bg-white rounded-lg flex items-center justify-center justify-items-center"
+                  style="width: 48px; height: 48px"
+                >
+                  <n-icon size="40" class="m-auto">
                     <icon-main />
                   </n-icon>
                 </div>

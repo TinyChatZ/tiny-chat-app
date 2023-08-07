@@ -3,7 +3,7 @@ import WebComponentMarkdownRenderCodeToolBar from '@renderer/components/markdown
 import App from './App.vue'
 import { createPinia } from 'pinia'
 import { router } from './router'
-// 导入TaiWindcss
+// 导入滚动条
 import './index.css'
 import { useSettingStore } from './stores/SettingStore'
 

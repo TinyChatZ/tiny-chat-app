@@ -71,13 +71,13 @@ function buildCodeBlock(str: string, lang?: string, other?: string): string {
 </template>
 
 <!-- 此处需要global样式 -->
-<style lang="less">
-// 代码块背景
+<style>
+/* 代码块背景 */
 .code_public_style {
   background: #f8f8f8;
 }
 
-// 滚动条相关代码
+/* 滚动条相关代码 */
 .code_scrollbar::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -103,11 +103,11 @@ function buildCodeBlock(str: string, lang?: string, other?: string): string {
 }
 
 @media (prefers-color-scheme: dark) {
-  // 代码块背景
+  /* 代码块背景 */
   .code_public_style {
     background: #333;
   }
-  // 滚动条相关代码
+  /* 滚动条相关代码 */
   .code_scrollbar::-webkit-scrollbar {
     width: 10px;
     height: 10px;

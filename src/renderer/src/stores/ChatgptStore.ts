@@ -125,7 +125,7 @@ export const chatgptStoreFactory = (id?: string) =>
         const index =
           this.chatList.push({ role: 'user', content: message, date: new Date(), id: -1 }) - 1
         const position = this.createPositionKey(index)
-        this.chatList[index].id = position
+        this.chatList[index].id = Date.now()
         return position
       },
       /**
@@ -308,6 +308,7 @@ export const chatgptStoreFactory = (id?: string) =>
         for (let i = 0; i < this.chatList.length; i++) {
           this.innerPositionMap.set(this.chatList[i].id, i)
         }
+        this.innerPositionCount = this.chatList.length
       },
       /**
        * 创建一个外部引用的绝对位置
