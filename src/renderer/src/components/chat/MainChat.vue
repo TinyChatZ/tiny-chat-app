@@ -37,29 +37,9 @@ function mouseEnterItem(id: number): void {
           @mouseenter="mouseEnterItem(item.id)"
         />
       </div>
-      <!-- <n-list-item v-for="item in data.chatList.get()" :key="item.date?.toString()">
-          <MainChatItem :item="item" />
-        </n-list-item> -->
     </div>
     <div class="p-2 flex-none">
       <ChatInputMain />
-      <!-- <n-spin :show="loading" class="w-full">
-        <n-input
-          ref="inpuArea"
-          v-model:value="question"
-          round
-          type="textarea"
-          placeholder="Ctrl+Enter发送"
-          class="h-15"
-          @keyup.ctrl.enter="sendData"
-        />
-      </n-spin>
-      <div class="">
-        <n-button-group vertical>
-          <n-button type="info" @click="refresh">刷新</n-button>
-          <n-button type="success" @click="sendData">发送</n-button>
-        </n-button-group>
-      </div> -->
     </div>
   </div>
 </template>

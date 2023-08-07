@@ -18,6 +18,7 @@ import {
   NPopconfirm,
   NCollapseTransition,
   NSpin,
+  NImage,
   useMessage,
   NIcon
 } from 'naive-ui'
@@ -180,6 +181,7 @@ function gotoHash(id: string): void {
           type="block"
         >
           <n-anchor-link title="通用(General)" href="#/set#general" @click="gotoHash('#general')" />
+          <n-anchor-link title="账户(Account)" href="#/set#account" @click="gotoHash('#account')" />
           <n-anchor-link title="ChatGPT" href="#/set#chatgpt" @click="gotoHash('#chatgpt')" />
           <!-- <n-anchor-link title="快捷键" href="#shortcuts" /> -->
           <!-- <n-anchor-link title="检查更新" href="#update" /> -->
@@ -268,6 +270,20 @@ function gotoHash(id: string): void {
                     min="0"
                     placeholder="请选择字体大小"
                   />
+                </n-form-item>
+              </n-form>
+            </n-card>
+
+            <!-- 账户卡片 -->
+            <n-card id="account" title="账户（Account）">
+              <n-form>
+                <n-form-item label="用户图片">
+                  <div class="flex items-center">
+                    <n-image
+                      width="100"
+                      src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
+                    />
+                  </div>
                 </n-form-item>
               </n-form>
             </n-card>
