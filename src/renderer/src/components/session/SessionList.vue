@@ -73,8 +73,8 @@ async function clickDeleteSessionName(item: ChatSessionIndexType): Promise<void>
 }
 
 // 切换选中的session
-function checkoutSession(item: ChatSessionIndexType): void {
-  chatSessiontStore.loadSession(item)
+async function checkoutSession(item: ChatSessionIndexType): Promise<void> {
+  await chatSessiontStore.loadSession(item)
   settingStore.showDialogState = true
   props.selectItemHooks?.(item)
 }
@@ -100,7 +100,7 @@ function checkoutSession(item: ChatSessionIndexType): void {
         </template>
         <template v-else>
           <n-button
-            class="text-left justify-normal"
+            class="text-left"
             :block="true"
             :quaternary="!(item.id === chatSessiontStore.curChatSession?.id)"
             :secondary="item.id === chatSessiontStore.curChatSession?.id"
@@ -151,4 +151,4 @@ function checkoutSession(item: ChatSessionIndexType): void {
     </div>
   </div>
 </template>
-<style  scoped></style>
+<style scoped></style>

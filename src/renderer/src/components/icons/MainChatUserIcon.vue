@@ -1,0 +1,49 @@
+<script setup lang="ts">
+import { useSettingStore } from '@renderer/stores/SettingStore'
+import { NImage, NIcon } from 'naive-ui'
+import { computed } from 'vue'
+
+const props = defineProps<{ previewDisabled?: boolean; size?: number }>()
+
+const settingStore = useSettingStore()
+const accountImagePath = computed(() => settingStore.account.accountImage)
+// 图片加载失败时，修改accountImage为'‘
+function loadError(): void {
+  if (settingStore.account.accountImage !== '') {
+    settingStore.account.accountImage = ''
+    settingStore.setSettingParams(settingStore.cloneNewSetting())
+  }
+}
+</script>
+<template>
+  <NImage
+    class="rounded-full"
+    :width="props.size"
+    :preview-disabled="props.previewDisabled ?? false"
+    :src="accountImagePath"
+    :on-error="loadError"
+  >
+    <!-- 默认缺省值 -->
+    <template #placeholder>
+      <n-icon :size="props.size">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          p-id="2380"
+          version="1.1"
+          class="icon"
+          t="1686280137392"
+        >
+          <g>
+            <title>Layer 1</title>
+            <path
+              stroke="null"
+              p-id="2381"
+              fill="currentColor"
+              d="m512.66669,2.66632c-281.12216,0 -510.00037,228.87821 -510.00037,510.00037s228.87821,510.00037 510.00037,510.00037s510.00037,-228.87821 510.00037,-510.00037s-228.87821,-510.00037 -510.00037,-510.00037zm-261.2197,858.29331c0,-144.2928 116.92692,-261.2197 261.2197,-261.2197s261.2197,116.92691 261.2197,261.2197c-72.1464,54.73174 -164.19524,87.07323 -261.2197,87.07323s-189.0733,-32.34148 -261.2197,-87.07323zm149.2684,-447.8052c0,-62.19518 49.75614,-111.9513 111.9513,-111.9513s111.9513,49.75613 111.9513,111.9513s-49.75614,111.9513 -111.9513,111.9513s-111.9513,-49.75614 -111.9513,-111.9513zm440.34178,383.12223c-22.39026,-111.9513 -99.51226,-204.00014 -204.00014,-246.29286c37.3171,-34.8293 59.70736,-82.09762 59.70736,-136.82936c0,-102.00008 -84.58544,-186.5855 -186.5855,-186.5855s-186.5855,84.58542 -186.5855,186.5855c0,54.73174 22.39026,102.00007 59.70736,136.82936c-104.48788,42.29272 -181.6099,134.34156 -204.00016,246.29286c-64.68297,-77.122 -106.97568,-174.14646 -106.97568,-283.60996c0,-238.82944 196.53672,-435.36617 435.36617,-435.36617s440.34178,196.53672 440.34178,435.36617c0,109.4635 -39.8049,206.48796 -106.97568,283.60996z"
+            />
+          </g>
+        </svg>
+      </n-icon>
+    </template>
+  </NImage>
+</template>

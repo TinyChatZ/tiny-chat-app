@@ -69,6 +69,7 @@ const useSettingStore = defineStore('setting', {
     async getSettingParams(): Promise<RpcResult<SettingType>> {
       const res = await window.api.getSettingParams()
       this.chatgpt = res.data.chatgpt
+      this.account = res.data.account
       this.general = res.data.general
       this.shortcuts = res.data.shortcuts
       this.other = res.data.other
@@ -92,6 +93,7 @@ const useSettingStore = defineStore('setting', {
     cloneNewSetting(): SettingType {
       return {
         chatgpt: this.chatgpt,
+        account: this.account,
         general: this.general,
         shortcuts: this.shortcuts,
         other: this.other

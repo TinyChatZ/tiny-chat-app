@@ -31,6 +31,9 @@ defineExpose<ChatInputmilkdownAction>(action)
   </MilkdownProvider>
 </template>
 <style>
+.milkdown * {
+  overflow-wrap: anywhere;
+}
 .milkdown p {
   margin: 0rem;
 }

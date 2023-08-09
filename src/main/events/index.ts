@@ -1,4 +1,4 @@
-import { BrowserWindow, app, ipcMain } from 'electron'
+import { BrowserWindow, app, dialog, ipcMain } from 'electron'
 import { versions, env } from 'process'
 import * as os from 'os'
 import { SetWindow } from '../windows/SetWindow'
@@ -11,6 +11,9 @@ import { ChatSessionItemType } from '@shared/chat/ChatSessionType'
 import { WindowMove } from '../utils/WindowControlUtils'
 import { TinyResultBuilder } from '@shared/common/TinyResult'
 import { StatusCode } from '@shared/common/StatusCode'
+import { copyFile } from 'fs/promises'
+import { getAssestDirPath } from '../utils/PathUtils'
+import path from 'path'
 export default function registerEvent(): void {
   // Public
 
@@ -152,4 +155,24 @@ export default function registerEvent(): void {
       return TinyResultBuilder.buildSuccess(item)
     }
   )
+
+  /**
+   * 选择图片并复制到指定位置
+   */
+  ipcMain.handle('set:getAccountImagePath', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: '选择图片',
+      properties: ['openFile']
+    })
+    console.log(filePaths)
+    if (canceled) return ''
+    const accountImageTargetPath = path.join(await getAssestDirPath(), 'accountImage.png')
+    try {
+      await copyFile(filePaths[0], accountImageTargetPath)
+      return accountImageTargetPath
+    } catch (e) {
+      console.log(e)
+      return ''
+    }
+  })
 }

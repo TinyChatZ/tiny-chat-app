@@ -52,7 +52,10 @@ const api = {
     item: ChatSessionItemType,
     op: 'update' | 'delete'
   ): Promise<TinyResult<ChatSessionItemType>> =>
-    ipcRenderer.invoke('chatsession:modifyChatSessionItem', item, op)
+    ipcRenderer.invoke('chatsession:modifyChatSessionItem', item, op),
+
+  /** 获取账户图片路径 */
+  getAccountImagePath: (): Promise<string> => ipcRenderer.invoke('set:getAccountImagePath')
 }
 
 // handlers for renderer

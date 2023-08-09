@@ -4,6 +4,7 @@ import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { ChatWindow } from './windows/ChatWindow'
 import registerEvent from './events'
 import * as SetService from './services/SetService'
+import * as PathUtils from './utils/PathUtils'
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -11,7 +12,7 @@ import * as SetService from './services/SetService'
 app.whenReady().then(async () => {
   // 加载本地设置到缓存中
   const setParam = await SetService.getSettingParams()
-  console.log(`配置目录:${SetService.getConfigPath()}`)
+  console.log(`配置目录:${PathUtils.getConfigPath()}`)
   console.log('初始化后的配置：' + JSON.stringify(setParam))
 
   // Set app user model id for windows

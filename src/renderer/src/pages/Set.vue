@@ -18,7 +18,6 @@ import {
   NPopconfirm,
   NCollapseTransition,
   NSpin,
-  NImage,
   useMessage,
   NIcon
 } from 'naive-ui'
@@ -26,6 +25,7 @@ import { ref, onMounted, watch } from 'vue'
 import { SettingType, SettingChatgptType, getDefaultSetting } from '@shared/config/SettingType'
 import IconMain from '@renderer/components/icons/IconMain.vue'
 import GithubButton from 'vue-github-button'
+import MainChatUserIcon from '@renderer/components/icons/MainChatUserIcon.vue'
 
 const settingStore = useSettingStore()
 const message = useMessage()
@@ -50,6 +50,7 @@ watch(
   formValue,
   async () => {
     // TODO 最好添加节流，否则每次都会请求
+    console.log('配置更新')
     settingStore.setSettingParams(formValue.value)
   },
   { deep: true }
@@ -156,6 +157,13 @@ watch(allInOneConfigData, (newValue) => {
     }, 500)
   }
 })
+
+// 点击选择图片信息
+async function getAccountImagePath(): Promise<void> {
+  const imagePath = await window.api.getAccountImagePath()
+  console.log(imagePath)
+  imagePath && (formValue.value.account.accountImage = imagePath)
+}
 
 // Hash模式下锚点定位兼容性代码
 function gotoHash(id: string): void {
@@ -277,14 +285,12 @@ function gotoHash(id: string): void {
             <!-- 账户卡片 -->
             <n-card id="account" title="账户（Account）">
               <n-form>
-                <n-form-item label="用户图片">
-                  <div class="flex items-center">
-                    <n-image
-                      width="100"
-                      src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
-                    />
+                <div class="flex flex-col items-center justify-center">
+                  <main-chat-user-icon :size="100" />
+                  <div class="mt-4">
+                    <n-button @click="getAccountImagePath">上传图片</n-button>
                   </div>
-                </n-form-item>
+                </div>
               </n-form>
             </n-card>
 

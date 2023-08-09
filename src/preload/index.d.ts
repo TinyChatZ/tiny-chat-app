@@ -74,6 +74,9 @@ declare global {
         item: ChatSessionItemType,
         op: 'update' | 'delete'
       ) => Promise<TinyResult<ChatSessionItemType>>
+
+      /** 获取账户图片路径 */
+      getAccountImagePath(): Promise<string>
     }
     handler: {
       /**

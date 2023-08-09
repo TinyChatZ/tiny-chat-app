@@ -76,6 +76,11 @@ interface SettingGeneralType {
   fontSize: number
 }
 
+/** 账户配置 */
+interface SettingAccountType {
+  accountImage: string | ''
+}
+
 /** 快捷键配置 */
 interface SettingShortcutsType {
   send: string
@@ -94,6 +99,8 @@ interface SettingOtherType {
 interface SettingType {
   /** ChatGPT配置 */
   chatgpt: SettingChatgptType
+  /** 账户配置 */
+  account: SettingAccountType
   /** 通用设置 */
   general: SettingGeneralType
   /** 快捷键配置 */
@@ -127,6 +134,9 @@ const getDefaultSetting = (): SettingType => ({
       generateTitle:
         'I need you to play a dialogue title generation role, you should distill the meaning of the dialogue as simple as possible and generate a reasonable title, the length of the title is less than 20 words,you just tell me the result without other thing,also you should use chinese answer me'
     }
+  },
+  account: {
+    accountImage: ''
   },
   general: {
     displayMode: 'system',

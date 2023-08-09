@@ -1,14 +1,13 @@
 // 配置相关服务
-import { app, nativeTheme } from 'electron'
-import path from 'path'
+import { nativeTheme } from 'electron'
 import fs from 'fs/promises'
 import 'highlight.js'
 import { RpcUtils, RpcResult } from '../utils/RpcUtils'
 import { WindowsManageUtils } from '../utils/WindowManageUtils'
 import { SetWindow } from '../windows/SetWindow'
 import * as _ from 'loadsh'
-import * as os from 'node:os'
 import { type SettingType, getDefaultSetting } from '@shared/config/SettingType'
+import { getConfigPath } from '../utils/PathUtils'
 /**
  * 缓存
  */
@@ -91,29 +90,6 @@ export const beforeSetSettingParams = async (
 export const broadcastSettingUpdate = (): void => {
   const windows = WindowsManageUtils.getAll().filter((v) => v.identity !== SetWindow.name)
   windows.forEach((window) => window.content.webContents.send('update-Setting-state', settingCache))
-}
-
-/**
- * 依据不同平台获取配置路径
- */
-export const getConfigPath = (): string => {
-  const exeSourcePath = path.dirname(app.getPath('exe'))
-  const dirPath = '/tiny-chat'
-  const fileName = 'setting.json'
-
-  if (process.platform === 'win32' && process.env.APPDATA) {
-    return path.join(process.env.APPDATA, dirPath, fileName)
-  } else if (process.platform === 'darwin') {
-    return path.join(os.homedir(), dirPath, fileName)
-  } else if (process.platform === 'linux') {
-    return path.join(
-      process.env.XDG_CONFIG_HOME ?? process.env.HOME ?? exeSourcePath,
-      dirPath,
-      fileName
-    )
-  } else {
-    return path.join(exeSourcePath, dirPath, fileName)
-  }
 }
 
 /**

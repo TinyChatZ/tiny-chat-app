@@ -9,6 +9,7 @@ import { defineStore } from 'pinia'
 import { useChatgptStore } from './ChatgptStore'
 import { useMessage } from 'naive-ui'
 import { StatusCode } from '@shared/common/StatusCode'
+import { unref } from 'vue'
 
 /** 渲染层维护一个独立的ChatSessionStatus用来表示当前状态
  * 此状态是一个采用链表实现的堆栈，栈顶是表头，栈底是表尾
@@ -168,7 +169,13 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
       if (typeof item === 'string') {
         session = this.sessions.get(item)
       } else {
-        session = { ...this.sessions.get(item.id), ...item }
+        session = this.sessions.get(item.id)
+        if (session) {
+          item.nameGenerate && (session.nameGenerate = item.nameGenerate)
+          item.name && (session.name = item.name)
+          item.fileName && (session.fileName = item.fileName)
+          session.updateTime = new Date()
+        }
       }
       // 如果获取到则刷新
       if (session) {

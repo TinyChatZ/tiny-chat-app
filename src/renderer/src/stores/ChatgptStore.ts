@@ -308,7 +308,7 @@ export const chatgptStoreFactory = (id?: string) =>
         for (let i = 0; i < this.chatList.length; i++) {
           this.innerPositionMap.set(this.chatList[i].id, i)
         }
-        this.innerPositionCount = this.chatList.length
+        this.innerPositionCount = this.chatList[this.chatList.length - 1]?.id + 1
       },
       /**
        * 创建一个外部引用的绝对位置

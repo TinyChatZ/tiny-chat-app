@@ -6,7 +6,7 @@ import {
   getChatSessionIndexDefault,
   getChatSessionItemDefault
 } from '@shared/chat/ChatSessionType'
-import { getConfigPath } from './SetService'
+import { getConfigPath } from '../utils/PathUtils'
 import path from 'path'
 import fs from 'fs/promises'
 import { TinyResult, TinyResultBuilder } from '@shared/common/TinyResult'
@@ -55,7 +55,6 @@ export async function saveIndexItem(detailItem?: ChatSessionItemType): Promise<s
       detailItem = getChatSessionItemDefault(indexItem)
       await syncStorage({ type: 'detail', item: detailItem, op: 'create' })
       cacheDetailMap.set(detailItem.id, detailItem)
-      // todo 同步到renderer
       return detailItem.id
     } else {
       // 修改一个索引
@@ -64,8 +63,11 @@ export async function saveIndexItem(detailItem?: ChatSessionItemType): Promise<s
         chatList: undefined
       } as ChatSessionIndexType)
       await syncStorage({ type: 'index' })
-      cacheDetailMap.set(detailItem.id, detailItem)
-      await syncStorage({ type: 'detail', item: detailItem, op: 'update' })
+      // 如果chatList是undefine，则不更新详情
+      if (detailItem.chatList === undefined) {
+        cacheDetailMap.set(detailItem.id, detailItem)
+        await syncStorage({ type: 'detail', item: detailItem, op: 'update' })
+      }
       return detailItem.id
     }
   } catch (e) {
