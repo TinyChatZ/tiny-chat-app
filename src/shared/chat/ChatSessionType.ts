@@ -33,7 +33,7 @@ export interface ChatSessionIndexType {
 }
 
 /**
- * ChatgptStore上下文对象
+ * ChatItemStore上下文对象
  * 保存了会话状态
  */
 export interface ChatSessionItemType extends ChatSessionIndexType {

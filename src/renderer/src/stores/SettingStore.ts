@@ -6,24 +6,21 @@ import { useMessage } from 'naive-ui'
 export interface RuntimeSettingParams {
   /** 是否展示完整对话界面 */
   showDialogState: boolean
-  runtime: {
-    systemInfo: Map<string, string>
-  }
+  /** 系统信息 */
+  systemInfo: Map<string, string>
 }
 
 function getDefaultRunTimeSettingParam(): RuntimeSettingParams {
   return {
     showDialogState: true,
-    runtime: {
-      systemInfo: new Map()
-    }
+    systemInfo: new Map()
   }
 }
 
 const useSettingStore = defineStore('setting', {
-  state: (): SettingType & RuntimeSettingParams => ({
+  state: (): SettingType & { runtime: RuntimeSettingParams } => ({
     ...getDefaultSetting(),
-    ...getDefaultRunTimeSettingParam()
+    runtime: getDefaultRunTimeSettingParam()
   }),
   getters: {
     getUrl(): string {
@@ -96,6 +93,7 @@ const useSettingStore = defineStore('setting', {
         account: this.account,
         general: this.general,
         shortcuts: this.shortcuts,
+        session: this.session,
         other: this.other
       }
     },

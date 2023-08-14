@@ -9,7 +9,7 @@ import { ref } from 'vue'
 import { useSettingStore } from '@renderer/stores/SettingStore'
 import ChatSessionGenerateTitleIcon from '../icons/ChatSessionGenerateTitleIcon.vue'
 import SessionStatus from './SessionStatus.vue'
-import { useChatgptStore } from '@renderer/stores/ChatgptStore'
+import { useChatItemStore } from '@renderer/stores/ChatItemStore'
 
 const chatSessiontStore = useChatSessionStore()
 const settingStore = useSettingStore()
@@ -59,7 +59,7 @@ async function clickRenameSessionName(item: ChatSessionIndexType): Promise<void>
 
 // 重新生成会话标题
 async function clickGenerateTitle(item: ChatSessionIndexType): Promise<void> {
-  const res = await useChatgptStore(item.id).getChatListRefining()
+  const res = await useChatItemStore(item.id).getChatListRefining()
   if (res !== '') {
     item.name = res
     item.nameGenerate = true
@@ -75,7 +75,7 @@ async function clickDeleteSessionName(item: ChatSessionIndexType): Promise<void>
 // 切换选中的session
 async function checkoutSession(item: ChatSessionIndexType): Promise<void> {
   await chatSessiontStore.loadSession(item)
-  settingStore.showDialogState = true
+  settingStore.runtime.showDialogState = true
   props.selectItemHooks?.(item)
 }
 </script>
@@ -152,3 +152,4 @@ async function checkoutSession(item: ChatSessionIndexType): Promise<void> {
   </div>
 </template>
 <style scoped></style>
+@renderer/stores/ChatItemStore

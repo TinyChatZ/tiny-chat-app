@@ -6,10 +6,10 @@ import {
 import { ChatItem } from '@shared/chat/ChatType'
 import { TinyResultUtils } from '@renderer/utils/TinyResultUtils'
 import { defineStore } from 'pinia'
-import { useChatgptStore } from './ChatgptStore'
+import { useChatItemStore } from './ChatItemStore'
 import { useMessage } from 'naive-ui'
 import { StatusCode } from '@shared/common/StatusCode'
-import { unref } from 'vue'
+import { useSettingStore } from './SettingStore'
 
 /** 渲染层维护一个独立的ChatSessionStatus用来表示当前状态
  * 此状态是一个采用链表实现的堆栈，栈顶是表头，栈底是表尾
@@ -74,6 +74,11 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
           ...(this.statusMap.get(value.id) || { status: 'unknown', loadTime: new Date() })
         })
       }
+      const setting = useSettingStore()
+      if (setting.session.sortType === 'createTime')
+        res.sort((a, b) => a.createTime.getTime() - b.createTime.getTime())
+      else if (setting.session.sortType === 'createTimeDesc')
+        res.sort((a, b) => b.createTime.getTime() - a.createTime.getTime())
       return res
     },
     /**
@@ -123,7 +128,7 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
       return chatSession
     },
     /**
-     * 根据索引加载对应的session(通常为打开一个session)
+     * 根据索引加载&刷新对应的session(通常为打开一个session)
      * @param index state中的索引项
      */
     async loadSession(index: ChatSessionIndexType): Promise<ChatSessionItemType | undefined> {
@@ -142,13 +147,13 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
       }
       // 创建ChatGPT Store并写入数据
       if (chatSessionItem) {
-        const chatgptStore = useChatgptStore(chatSessionItem.id)
-        chatgptStore.chatList = chatSessionItem.chatList ?? []
-        chatgptStore.refreshIndexMap()
+        const chatItemStore = useChatItemStore(chatSessionItem.id)
+        chatItemStore.chatList = chatSessionItem.chatList ?? []
+        chatItemStore.refreshIndexMap()
         this.curChatSessionId = chatSessionItem.id
         this.sessionModifySuccess(chatSessionItem.id)
       } else {
-        console.error('载入的chatgptStore为空')
+        console.error('载入的chatItemStore为空')
       }
 
       return chatSessionItem
@@ -211,8 +216,9 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
           await window.api.modifyChatSessionItem(r, 'delete')
         )
         if (result) {
-          this.sessions.set(result.id, result)
-          this.indexMap.set(result.id, getChatSessionIndexByItem(result))
+          // 删除后就直接创建了
+          this.sessions.delete(result.id)
+          this.indexMap.delete(result.id)
           await this.createNewSession()
         }
       }
@@ -313,20 +319,3 @@ export const useChatSessionStore = defineStore(`chatSessionStore`, {
     }
   }
 })
-
-/**
- * ChatSession注册监听更新时间
- * todo 这里最好优化成增量
- */
-// window.handler.updateChatSessionState((_e, value) => {
-//   console.log(`接收到主进程的缓存刷新事件:${JSON.stringify(value)}`)
-//   const chatSession = useChatSessionStore()
-//   chatSession.indexMap = value.index
-//   chatSession.sessions = value.detail
-//   console.log(value.index)
-//   chatSession.statusMap = new Map()
-//   for (const item of chatSession.indexMap.keys()) {
-//     chatSession.statusMap.set(item, { status: 'sync', loadTime: new Date() })
-//   }
-//   return value
-// })

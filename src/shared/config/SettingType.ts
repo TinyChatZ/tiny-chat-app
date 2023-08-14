@@ -91,6 +91,16 @@ interface SettingShortcutsType {
   undoFixedWindowPosition: string
 }
 
+/** 会话管理配置 */
+interface SettingSessionType {
+  /** 会话原始位置 */
+  sourcePath: string
+  /** 会话展示排序方式 */
+  sortType: 'normal' | 'createTime' | 'createTimeDesc'
+  /** 自动生成标题配置 */
+  autoTitleGenerate: 'none' | 'oneStep' | 'everyTime'
+}
+
 /** 其他特殊配置 */
 interface SettingOtherType {
   devMode: boolean
@@ -105,6 +115,8 @@ interface SettingType {
   general: SettingGeneralType
   /** 快捷键配置 */
   shortcuts: SettingShortcutsType
+  /** 会话配置 */
+  session: SettingSessionType
   /** 其他特殊配置 */
   other: SettingOtherType
 }
@@ -161,6 +173,11 @@ const getDefaultSetting = (): SettingType => ({
     windowTop: '',
     doFixedWindowPosition: '',
     undoFixedWindowPosition: ''
+  },
+  session: {
+    sourcePath: '',
+    sortType: 'normal',
+    autoTitleGenerate: 'oneStep'
   },
   other: {
     devMode: false

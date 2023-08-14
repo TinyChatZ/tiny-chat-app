@@ -17,7 +17,7 @@ const mouseEnterDrag = ref<boolean>()
 
 // 监听是否缩小、session选择是否show、鼠标是否进入可拖拽区域
 watch(
-  [(): boolean => settingStore.showDialogState, popoverStatus, mouseEnterDrag],
+  [(): boolean => settingStore.runtime.showDialogState, popoverStatus, mouseEnterDrag],
   ([showDialogState, popoverStatus, mouseEnterDrag], [oldShowDialogState]) => {
     // 如果窗口缩放没有变化，且窗口是放大的，则忽略所有后续逻辑（减少IPC次数）
     if (oldShowDialogState === showDialogState && showDialogState) {
@@ -53,7 +53,7 @@ function onMouseMoveEvent(event: MouseEvent, type: 'over' | 'out' | 'down' | 'up
   if (type === 'over') {
     // 仅当缩小状态且鼠标在mainIconDrag区域内，才会取消
     if (
-      settingStore.showDialogState === false &&
+      settingStore.runtime.showDialogState === false &&
       (event.target as HTMLElement).id === 'mainIconDrag'
     )
       mouseEnterDrag.value = true
@@ -96,21 +96,21 @@ function changeShowDrawer(): void {
   if (clickTimer) {
     clearTimeout(clickTimer)
     clickTimer = null
-    settingStore.showDialogState = !settingStore.showDialogState
+    settingStore.runtime.showDialogState = !settingStore.runtime.showDialogState
   }
   // 单击事件 & hover事件
   else {
     clickTimer = setTimeout(() => {
       clearTimeout(clickTimer)
       clickTimer = null
-      if (settingStore.showDialogState) {
+      if (settingStore.runtime.showDialogState) {
         showDrawer.value = !showDrawer.value
       }
     }, 200)
   }
 }
 function hoverChangeShowDrawer(): void {
-  if (settingStore.showDialogState && settingStore.general.sessionWakeUp.mainWindow === 'hover') {
+  if (settingStore.runtime.showDialogState && settingStore.general.sessionWakeUp.mainWindow === 'hover') {
     clearTimeout(hoverTimer)
     hoverTimer = setTimeout(() => {
       showDrawer.value = !showDrawer.value
@@ -137,7 +137,7 @@ function hoverChangeShowDrawer(): void {
       <n-popover
         ref="popover"
         placement="bottom-start"
-        :disabled="settingStore.showDialogState"
+        :disabled="settingStore.runtime.showDialogState"
         :on-update-show="onPopoverStatusChange"
       >
         <template #trigger>
@@ -158,7 +158,7 @@ function hoverChangeShowDrawer(): void {
     </n-el>
     <!-- 标题 -->
     <div
-      v-show="settingStore.showDialogState"
+      v-show="settingStore.runtime.showDialogState"
       class="flex gap-x-2 items-center pt-1 pr-6 select-none"
     >
       <!-- session状态(生成标题或同步状态) -->

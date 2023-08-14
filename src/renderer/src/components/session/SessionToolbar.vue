@@ -51,7 +51,7 @@ const eixtProgram = (): void => {
 // 是否显示dialog
 const showDialog = (): void => {
   props.selectItemHooks?.(chatSessiontStore.curChatSession || getChatSessionIndexDefault())
-  settingStore.showDialogState = !settingStore.showDialogState
+  settingStore.runtime.showDialogState = !settingStore.runtime.showDialogState
 }
 </script>
 <template>
@@ -93,7 +93,9 @@ const showDialog = (): void => {
       <template #trigger>
         <n-button text @click="showDialog">
           <n-icon>
-            <chat-session-in-out-icon :status="settingStore.showDialogState ? 'in' : 'out'" />
+            <chat-session-in-out-icon
+              :status="settingStore.runtime.showDialogState ? 'in' : 'out'"
+            />
           </n-icon>
         </n-button>
       </template>
@@ -103,4 +105,4 @@ const showDialog = (): void => {
     <n-button quaternary @click="eixtProgram">退出</n-button>
   </div>
 </template>
-<style  scoped></style>
+<style scoped></style>

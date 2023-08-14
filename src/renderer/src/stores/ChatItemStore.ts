@@ -1,14 +1,14 @@
-import { EventSourceOptions, getEventSource } from '@renderer/utils/EventSource'
 import { defineStore } from 'pinia'
 import { useSettingStore } from './SettingStore'
 import { ChatItem } from '@shared/chat/ChatType'
 import { TinyResult, TinyResultBuilder } from '@shared/common/TinyResult'
 import { StatusCode } from '@shared/common/StatusCode'
 import { useChatSessionStore } from './ChatSessionStore'
+import { ChatGPTService } from '@renderer/service/chat/ChatGPTService'
 /**
- * ChatgptStoreState类型
+ * ChatItemStoreState类型
  */
-export interface ChatgptStoreState {
+export interface ChatItemStoreState {
   id?: string
   chatList: Array<ChatItem>
   curQuestion: string
@@ -21,11 +21,11 @@ export interface ChatgptStoreState {
  * 这也许不是一个好主意，但是通过这种方法可以实现类型的自动推导
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const useChatgptStore = (id?: string) => chatgptStoreFactory(id)()
+export const useChatItemStore = (id?: string) => chatItemStoreFactory(id)()
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const chatgptStoreFactory = (id?: string) =>
+export const chatItemStoreFactory = (id?: string) =>
   defineStore(`chatgpt${id && '_' + id}`, {
-    state: (): ChatgptStoreState => ({
+    state: (): ChatItemStoreState => ({
       id,
       chatList: [],
       curQuestion: '',
@@ -33,43 +33,6 @@ export const chatgptStoreFactory = (id?: string) =>
       innerPositionCount: 0
     }),
     getters: {
-      /**
-       * 获取请求参数
-       * @returns
-       */
-      getRequestParam(): { url: string; options: EventSourceOptions } {
-        // 不会重复创建 https://pinia.vuejs.org/zh/cookbook/composing-stores.html#shared-getters
-        const setting = useSettingStore().chatgpt
-        // 如果拿不到token就配置
-        if (!setting?.token) {
-          throw new Error('token is not exists')
-        }
-        const url =
-          ((setting.proxy.useProxy && setting.proxy?.address) || 'https://api.openai.com') +
-          '/v1/chat/completions'
-        const headers = {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + setting.token
-        }
-        if (setting.proxy?.param) {
-          headers['token'] = setting.proxy.param
-        }
-        return { url, options: { method: 'POST', headers: headers, body: undefined } }
-      },
-      /**
-       * 获取请求的Body
-       */
-      getRequestBody(): {
-        model: string
-        stream: boolean
-        messages: { role: string; content: string }[]
-      } {
-        return {
-          model: 'gpt-3.5-turbo',
-          stream: true,
-          messages: this.getLimitsData.map((item) => ({ role: item.role, content: item.content }))
-        }
-      },
       /**
        * 计算请求限制策略执行后的数据
        */
@@ -125,7 +88,7 @@ export const chatgptStoreFactory = (id?: string) =>
         const index =
           this.chatList.push({ role: 'user', content: message, date: new Date(), id: -1 }) - 1
         const position = this.createPositionKey(index)
-        this.chatList[index].id = Date.now()
+        this.chatList[index].id = position
         return position
       },
       /**
@@ -183,6 +146,39 @@ export const chatgptStoreFactory = (id?: string) =>
         this.id && (await chatSessionStore.syncSessionInfo(this.id, this.chatList))
       },
       /**
+       * 获取真实的索引
+       * @param position 传入的位置
+       * @returns 真实的数组位置
+       */
+      getRealIndex(position: number): number {
+        const index = this.innerPositionMap.get(position)
+        if (!index) throw new Error('invalid position')
+        return index
+      },
+      /**
+       * 刷新内部维护的映射表
+       * 首次加载，或者长时间改动index顺序时可能需要刷新一下维护的映射表
+       * 注意调用此方法，原先映射关系将全部失效
+       */
+      refreshIndexMap(): void {
+        this.innerPositionMap.clear()
+        for (let i = 0; i < this.chatList.length; i++) {
+          this.chatList[i].id = i
+          this.innerPositionMap.set(this.chatList[i].id, i)
+        }
+        this.innerPositionCount = this.chatList[this.chatList.length - 1]?.id + 1
+      },
+      /**
+       * 创建一个外部引用的绝对位置
+       * @param index 内部数组的位置
+       * @returns 外部可以引用的绝对位置
+       */
+      createPositionKey(index: number): number {
+        const t = this.innerPositionCount++
+        this.innerPositionMap.set(t, index)
+        return t
+      },
+      /**
        * 创建一个提问请求
        * @param question 需要请求的用户问题
        * @param refreshHook 刷新钩子，stream模式下，每次更新数据是回调
@@ -196,34 +192,9 @@ export const chatgptStoreFactory = (id?: string) =>
         this.id && chatSessionStore.prepareSessionSyncStatus(this.id, 'generateChat')
         // 开始发送gpt请求
         this.createUserInfo(question)
-        const gptSetting = useSettingStore().chatgpt
-        if (!gptSetting?.token) {
-          return TinyResultBuilder.buildException(StatusCode.E20001)
-        }
-        const { url, options } = this.getRequestParam
-        options.body = this.getRequestBody
-        const position = this.createChatListItem('assistant')
-        refreshHook && refreshHook(true)
-        // 发起EventSource调用
         try {
-          await getEventSource<{ choices: Array<{ delta: { role?: string; content?: string } }> }>(
-            url,
-            options,
-            // 渲染结果
-            (res) => {
-              if (typeof res.data !== 'string') {
-                if (res.data?.choices[0].delta?.role) {
-                  this.chatList[this.getRealIndex(position)].role = res.data?.choices[0].delta?.role
-                } else if (res.data?.choices[0].delta?.content) {
-                  this.chatList[this.getRealIndex(position)].content +=
-                    res.data?.choices[0].delta?.content
-                  refreshHook && refreshHook(false)
-                }
-              }
-            }
-          )
+          await ChatGPTService.INSTANCE.getChatResultStream(this.id, refreshHook)
         } catch (e) {
-          this.dropChatListItem(position)
           return TinyResultBuilder.buildException(StatusCode.E20002)
         } finally {
           const chatSessionStore = useChatSessionStore()
@@ -255,70 +226,16 @@ export const chatgptStoreFactory = (id?: string) =>
           return ''
         }
         // 发起请求
-        const { url, options } = this.getRequestParam
-        const body = this.getRequestBody
-        body.messages.map((item) => ({
-          role: item.role,
-          content: item.content
-        }))
-        body.messages.unshift({
-          role: 'system',
-          content: settingStore.chatgpt.prompts.generateTitle
-        })
-        options.body = body
-
         try {
-          const res = await getEventSource<{
-            choices: Array<{ delta: { role?: string; content?: string } }>
-          }>(url, options)
-          let title = ''
-          for (const item of res.data) {
-            if (typeof item.data != 'string' && item.data?.choices[0].delta?.content) {
-              title += item.data?.choices[0].delta?.content
-            }
-          }
-          if (title.length > 50) {
-            console.warn(`发生标题缩减原始结果为：${title}`)
-            title = title.substring(0, 50)
-          }
-          return title
+          return await ChatGPTService.INSTANCE.getChatTitle(
+            this.id,
+            settingStore.chatgpt.prompts.generateTitle
+          )
         } catch {
           window.$message.error('请求失败，请检查网络')
           this.id && chatSessionStore.sessionModifySuccess(this.id)
           return ''
         }
-      },
-      /**
-       * 获取真实的索引
-       * @param position 传入的位置
-       * @returns 真实的数组位置
-       */
-      getRealIndex(position: number): number {
-        const index = this.innerPositionMap.get(position)
-        if (!index) throw new Error('invalid position')
-        return index
-      },
-      /**
-       * 刷新内部维护的映射表
-       * 首次加载，或者长时间改动index顺序时可能需要刷新一下维护的映射表
-       * 注意调用此方法，原先映射关系将全部失效
-       */
-      refreshIndexMap(): void {
-        this.innerPositionMap.clear()
-        for (let i = 0; i < this.chatList.length; i++) {
-          this.innerPositionMap.set(this.chatList[i].id, i)
-        }
-        this.innerPositionCount = this.chatList[this.chatList.length - 1]?.id + 1
-      },
-      /**
-       * 创建一个外部引用的绝对位置
-       * @param index 内部数组的位置
-       * @returns 外部可以引用的绝对位置
-       */
-      createPositionKey(index: number): number {
-        const t = this.innerPositionCount++
-        this.innerPositionMap.set(t, index)
-        return t
       }
     }
   })

@@ -281,7 +281,19 @@ function gotoHash(id: string): void {
                 </n-form-item>
               </n-form>
             </n-card>
-
+            <n-card id="session" title="会话（Session)">
+              <n-form>
+                <n-form-item label="排序方式">
+                  <n-radio-group v-model:value="formValue.session.sortType">
+                    <n-radio-button key="normal" value="normal">常规</n-radio-button>
+                    <n-radio-button key="createTimeDesc" value="createTimeDesc">
+                      最近创建
+                    </n-radio-button>
+                    <n-radio-button key="createTime" value="createTime">创建顺序</n-radio-button>
+                  </n-radio-group>
+                </n-form-item>
+              </n-form>
+            </n-card>
             <!-- 账户卡片 -->
             <n-card id="account" title="账户（Account）">
               <n-form>

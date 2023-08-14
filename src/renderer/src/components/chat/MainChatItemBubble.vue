@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ChatItem } from '@shared/chat/ChatType'
-import { useChatgptStore } from '@renderer/stores/ChatgptStore'
+import { useChatItemStore } from '@renderer/stores/ChatItemStore'
 import MarkdownRender from '@renderer/components/markdown/MarkdownRender.vue'
 import MainChatItemToolBar from './MainChatItemToolBar.vue'
 import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
@@ -28,9 +28,9 @@ const action = ref({
   },
   drop() {
     try {
-      // 每次删除都要计算当前激活的chatgptStore
-      const chatgptStore = useChatgptStore(chatSession.curChatSession?.id)
-      chatgptStore.dropChatListItem(props.item.id)
+      // 每次删除都要计算当前激活的useChatItemStore
+      const chatItemStore = useChatItemStore(chatSession.curChatSession?.id)
+      chatItemStore.dropChatListItem(props.item.id)
     } catch (e) {
       console.log(e)
       message.error('没有删除成功')
@@ -65,3 +65,4 @@ const action = ref({
   </div>
 </template>
 <style scoped></style>
+@renderer/stores/ChatItemStore

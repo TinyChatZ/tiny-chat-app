@@ -15,7 +15,7 @@ TinyResultUtils.defaultHandler = defaultHandler
   <div class="h-full">
     <!-- 标题头组件 -->
     <ChatTitleBar />
-    <div v-show="settingStore.showDialogState" style="height: 90%">
+    <div v-show="settingStore.runtime.showDialogState" style="height: 90%">
       <main-chat ref="mainChat" />
     </div>
   </div>

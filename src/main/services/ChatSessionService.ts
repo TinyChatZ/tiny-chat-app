@@ -64,7 +64,7 @@ export async function saveIndexItem(detailItem?: ChatSessionItemType): Promise<s
       } as ChatSessionIndexType)
       await syncStorage({ type: 'index' })
       // 如果chatList是undefine，则不更新详情
-      if (detailItem.chatList === undefined) {
+      if (detailItem.chatList !== undefined) {
         cacheDetailMap.set(detailItem.id, detailItem)
         await syncStorage({ type: 'detail', item: detailItem, op: 'update' })
       }

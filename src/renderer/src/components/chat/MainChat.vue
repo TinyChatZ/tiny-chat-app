@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { chatgptStoreFactory } from '@renderer/stores/ChatgptStore'
+import { chatItemStoreFactory } from '@renderer/stores/ChatItemStore'
 import { useSettingStore } from '@renderer/stores/SettingStore'
 import { mapWritableState } from 'pinia'
 import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
@@ -13,7 +13,7 @@ settingStore.getSettingParams()
 
 // 处理data绑定到视图中
 const data = computed(() => ({
-  ...mapWritableState(chatgptStoreFactory(chatSessionStore.curChatSessionId), ['chatList'])
+  ...mapWritableState(chatItemStoreFactory(chatSessionStore.curChatSessionId), ['chatList'])
 }))
 
 // 鼠标移入显示toolbar
@@ -97,3 +97,4 @@ function mouseEnterItem(id: number): void {
   }
 }
 </style>
+@renderer/stores/ChatItemStore

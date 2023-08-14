@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
-import { useChatgptStore } from '@renderer/stores/ChatgptStore'
+import { useChatItemStore } from '@renderer/stores/ChatItemStore'
 import { useMessage } from 'naive-ui'
 import { ref, watch } from 'vue'
 import ChatInputMilkdownWapper from './ChatInputMilkdownWapper.vue'
@@ -19,14 +19,14 @@ const message = useMessage()
 const loading = ref(false)
 
 // 定一个默认的store，即使main出现问题，也可以正常展示一个临时的store
-let chatgptStore = useChatgptStore()
+let chatItemStore = useChatItemStore()
 // 聊天记录数据（监听session是否有变化），变化则切换session
 watch(
   () => chatSessionStore.curChatSessionId,
   (newValue, oldValue) => {
     console.log(`changed session from ${oldValue} to ${newValue}`)
     loading.value = false
-    chatgptStore = useChatgptStore(newValue)
+    chatItemStore = useChatItemStore(newValue)
   },
   { immediate: true }
 )
@@ -43,7 +43,7 @@ const sendData = async (): Promise<void> => {
 
   // 发送
   let scrollbarTimeout
-  const res = await chatgptStore.sendChatGPTQuery(question, (isQuestionCreate: boolean) => {
+  const res = await chatItemStore.sendChatGPTQuery(question, (isQuestionCreate: boolean) => {
     const element = window.document.getElementById('scrollbar')
     if (element) {
       clearTimeout(scrollbarTimeout)
@@ -65,7 +65,7 @@ const sendData = async (): Promise<void> => {
   if (res.success) {
     // 是否生成标题
     if (chatSessionStore.curChatSession && !chatSessionStore.curChatSession.nameGenerate) {
-      const title = await chatgptStore.getChatListRefining()
+      const title = await chatItemStore.getChatListRefining()
       // 持久化结果
       if (title !== '' && chatSessionStore.curChatSession) {
         chatSessionStore.curChatSession.nameGenerate = true
@@ -83,8 +83,8 @@ const sendData = async (): Promise<void> => {
 
 // @ts-ignore 刷新数据
 const refresh = (): void => {
-  chatgptStore.$reset()
-  chatgptStore.createChatListItem('system', '重新开始是很好的……')
+  chatItemStore.$reset()
+  chatItemStore.createChatListItem('system', '重新开始是很好的……')
   loading.value = false
 }
 </script>
@@ -99,3 +99,4 @@ const refresh = (): void => {
 </template>
 
 <style></style>
+@renderer/stores/ChatItemStore
