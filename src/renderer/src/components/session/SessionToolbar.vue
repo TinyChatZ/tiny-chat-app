@@ -6,11 +6,12 @@ import {
   getChatSessionIndexByItem,
   getChatSessionIndexDefault
 } from '@shared/chat/ChatSessionType'
-import { NButton, NPopover, NIcon } from 'naive-ui'
+import { NButton, NPopover, NIcon, NPopselect } from 'naive-ui'
 import ChatSessionAddIcon from '@renderer/components/icons/ChatSessionAddIcon.vue'
 import ChatSessionInOutIcon from '../icons/ChatSessionInOutIcon.vue'
 import ChatSessionEditIcon from '../icons/ChatSessionEditIcon.vue'
 import ChatSessionSettingsIcon from '../icons/ChatSessionSettingsIcon.vue'
+import { computed } from 'vue'
 
 const chatSessiontStore = useChatSessionStore()
 const settingStore = useSettingStore()
@@ -53,6 +54,21 @@ const showDialog = (): void => {
   props.selectItemHooks?.(chatSessiontStore.curChatSession || getChatSessionIndexDefault())
   settingStore.runtime.showDialogState = !settingStore.runtime.showDialogState
 }
+
+// 会话过滤功能
+const sessionSortType = computed({
+  get() {
+    return settingStore.session.sortType
+  },
+  set(newVal) {
+    settingStore.session.sortType = newVal
+  }
+})
+const sessionSortTypes = [
+  { label: '常规', value: 'normal' },
+  { label: '最早创建', value: 'createTime' },
+  { label: '最近创建', value: 'createTimeDesc' }
+]
 </script>
 <template>
   <div class="text-center flex gap-x-2">
@@ -101,6 +117,14 @@ const showDialog = (): void => {
       </template>
       缩小/放大
     </n-popover>
+
+    <n-popselect v-model:value="sessionSortType" :options="sessionSortTypes">
+      <n-button text>
+        <n-icon>
+          <chat-session-in-out-icon :status="settingStore.runtime.showDialogState ? 'in' : 'out'" />
+        </n-icon>
+      </n-button>
+    </n-popselect>
 
     <n-button quaternary @click="eixtProgram">退出</n-button>
   </div>

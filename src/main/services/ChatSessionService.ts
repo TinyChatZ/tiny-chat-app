@@ -29,7 +29,14 @@ export async function getIndexMap(): Promise<TinyResult<Map<string, ChatSessionI
   if (!initFlag) {
     try {
       const data = await fs.readFile(cachePath.index)
-      cacheIndexMap = new Map(Object.entries(JSON.parse(data.toString())))
+      cacheIndexMap = new Map(
+        Object.entries(
+          JSON.parse(data.toString(), (k, v) => {
+            if (k !== 'createTime' && k !== 'updateTime') return v
+            return new Date(Date.parse(v))
+          })
+        )
+      )
     } catch (e) {
       // 如果直接读取失败，就创建索引
       const syncRes = await syncStorage({ type: 'index' })

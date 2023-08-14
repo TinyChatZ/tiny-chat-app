@@ -110,7 +110,10 @@ function changeShowDrawer(): void {
   }
 }
 function hoverChangeShowDrawer(): void {
-  if (settingStore.runtime.showDialogState && settingStore.general.sessionWakeUp.mainWindow === 'hover') {
+  if (
+    settingStore.runtime.showDialogState &&
+    settingStore.general.sessionWakeUp.mainWindow === 'hover'
+  ) {
     clearTimeout(hoverTimer)
     hoverTimer = setTimeout(() => {
       showDrawer.value = !showDrawer.value
