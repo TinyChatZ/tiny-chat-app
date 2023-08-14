@@ -38,7 +38,7 @@ const useSettingStore = defineStore('setting', {
     getDisplayMode(): 'light' | 'dark' {
       if (this.general.displayMode !== 'system') return this.general.displayMode
 
-      if (window.matchMedia('(prefers-color-scheme: dark)')) {
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
         return 'dark'
       } else {
         return 'light'
