@@ -100,7 +100,7 @@ async function checkoutSession(item: ChatSessionIndexType): Promise<void> {
         </template>
         <template v-else>
           <n-button
-            class="text-left"
+            style="justify-content: start"
             :block="true"
             :quaternary="!(item.id === chatSessiontStore.curChatSession?.id)"
             :secondary="item.id === chatSessiontStore.curChatSession?.id"

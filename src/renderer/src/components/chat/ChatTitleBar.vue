@@ -28,13 +28,11 @@ watch(
     if (showDialogState) {
       document.body.classList.remove('body-transparent')
       isIgnoreMouseEvent = false
-      // fix 非置顶缩小窗口消失
-      // window.api.resize(!showDialogState)
+      window.api.resize(!showDialogState)
     } else if (!showDialogState) {
       document.body.classList.add('body-transparent')
       isIgnoreMouseEvent = true
-      // fix 非置顶缩小窗口消失
-      // window.api.resize(!showDialogState)
+      window.api.resize(!showDialogState)
     }
     // 如果鼠标进入可拖动区域，捕获鼠标事件
     isIgnoreMouseEvent = !mouseEnterDrag

@@ -189,6 +189,7 @@ function gotoHash(id: string): void {
           type="block"
         >
           <n-anchor-link title="通用(General)" href="#/set#general" @click="gotoHash('#general')" />
+          <n-anchor-link title="会话(Session)" href="#/set#session" @click="gotoHash('#session')" />
           <n-anchor-link title="账户(Account)" href="#/set#account" @click="gotoHash('#account')" />
           <n-anchor-link title="ChatGPT" href="#/set#chatgpt" @click="gotoHash('#chatgpt')" />
           <!-- <n-anchor-link title="快捷键" href="#shortcuts" /> -->

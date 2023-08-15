@@ -11,6 +11,7 @@ import ChatSessionAddIcon from '@renderer/components/icons/ChatSessionAddIcon.vu
 import ChatSessionInOutIcon from '../icons/ChatSessionInOutIcon.vue'
 import ChatSessionEditIcon from '../icons/ChatSessionEditIcon.vue'
 import ChatSessionSettingsIcon from '../icons/ChatSessionSettingsIcon.vue'
+import ChatSessionSortIcon from '../icons/ChatSessionSortIcon.vue'
 import { computed } from 'vue'
 
 const chatSessiontStore = useChatSessionStore()
@@ -121,7 +122,7 @@ const sessionSortTypes = [
     <n-popselect v-model:value="sessionSortType" :options="sessionSortTypes">
       <n-button text>
         <n-icon>
-          <chat-session-in-out-icon :status="settingStore.runtime.showDialogState ? 'in' : 'out'" />
+          <chat-session-sort-icon />
         </n-icon>
       </n-button>
     </n-popselect>

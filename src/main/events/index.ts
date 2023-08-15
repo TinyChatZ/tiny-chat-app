@@ -54,8 +54,11 @@ export default function registerEvent(): void {
     if (flag) {
       // const setParam = SetService.getCacheSettingParams()
       // win?.setSize(setParam.general.windowSize.width, setParam.general.windowSize.height, true)
+      // fix windows平台图标消失
+      win?.setAlwaysOnTop(true, 'status')
       win?.setSkipTaskbar(true)
     } else {
+      win?.setAlwaysOnTop(SetService.getCacheSettingParams().general.windowTop)
       win?.setSkipTaskbar(false)
     }
   })
