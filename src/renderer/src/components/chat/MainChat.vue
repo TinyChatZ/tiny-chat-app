@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { chatItemStoreFactory } from '@renderer/stores/ChatItemStore'
 import { useSettingStore } from '@renderer/stores/SettingStore'
 import { mapWritableState } from 'pinia'
@@ -21,6 +21,10 @@ const curMouseEnterId = ref(-1)
 function mouseEnterItem(id: number): void {
   curMouseEnterId.value = id
 }
+watch(
+  () => chatSessionStore.curChatSessionId,
+  () => (curMouseEnterId.value = -1)
+)
 </script>
 
 <template>

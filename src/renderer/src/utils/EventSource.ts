@@ -37,7 +37,7 @@ export async function getEventSource<T>(
       const sourceArray = sourceText.split(/[\n]+/).filter((v) => v != '')
       // 为什么这里用in不行，要用of才可以？
       for (const item of sourceArray) {
-        const text = item.substring(6)
+        const text = item.substring(5)
         try {
           const t = { type: 'object', data: JSON.parse(text) }
           result.push(t)

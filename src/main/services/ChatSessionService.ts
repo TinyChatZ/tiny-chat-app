@@ -110,7 +110,13 @@ async function loadDetailItem(id: string): Promise<void> {
   if (cacheDetailMap.get(id)) return
   try {
     const res = await fs.readFile(path.join(cachePath.dir, `${id}.json`))
-    cacheDetailMap.set(id, JSON.parse(res.toString()))
+    cacheDetailMap.set(
+      id,
+      JSON.parse(res.toString(), (k, v) => {
+        if (k !== 'createTime' && k !== 'updateTime') return v
+        return new Date(Date.parse(v))
+      })
+    )
   } catch (e) {
     console.error('loadDetailItem Error:', e)
   }
@@ -144,7 +150,13 @@ async function syncStorage(options: {
   try {
     // 刷新索引
     if (options.type === 'index') {
-      await fs.writeFile(cachePath.index, JSON.stringify(Object.fromEntries(cacheIndexMap)))
+      await fs.writeFile(
+        cachePath.index,
+        JSON.stringify(Object.fromEntries(cacheIndexMap), (_key, value) => {
+          if (value instanceof Date) return value.getTime()
+          else return value
+        })
+      )
     }
 
     // 刷新详情
@@ -154,7 +166,10 @@ async function syncStorage(options: {
         case 'update':
           await fs.writeFile(
             path.join(cachePath.dir, `${options?.item?.id ?? 'none'}.json`),
-            JSON.stringify(options?.item)
+            JSON.stringify(options?.item, (_key, value) => {
+              if (value instanceof Date) return value.getTime()
+              else return value
+            })
           )
           return TinyResultBuilder.buildSuccess()
         case 'delete':

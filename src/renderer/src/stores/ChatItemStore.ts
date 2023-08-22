@@ -162,6 +162,7 @@ export const chatItemStoreFactory = (id?: string) =>
        */
       refreshIndexMap(): void {
         this.innerPositionMap.clear()
+        if (this.chatList.length <= 0) return
         for (let i = 0; i < this.chatList.length; i++) {
           this.chatList[i].id = i
           this.innerPositionMap.set(this.chatList[i].id, i)
