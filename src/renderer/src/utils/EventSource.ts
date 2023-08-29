@@ -3,21 +3,17 @@ export interface EventSourceOptions {
   headers?: HeadersInit
   body?: object
 }
-export interface EventSourceResultData<T> {
-  type: string
-  data: T | string
-}
-interface EventSourceResult<T> {
-  data: Array<EventSourceResultData<T>>
+interface EventSourceResult {
+  data: Array<string>
   status: number
 }
 
-export async function getEventSource<T>(
+export async function getEventSource(
   url: string,
   options: EventSourceOptions,
-  onMessage?: (data: EventSourceResultData<T>) => void
-): Promise<EventSourceResult<T>> {
-  const result: Array<EventSourceResultData<T>> = []
+  onMessage?: (data: string) => void
+): Promise<EventSourceResult> {
+  const result: Array<string> = []
   const response = await fetch(url, {
     method: 'POST',
     body: JSON.stringify(options.body ?? ''),
@@ -37,19 +33,9 @@ export async function getEventSource<T>(
       const sourceArray = sourceText.split(/[\n]+/).filter((v) => v != '')
       // 为什么这里用in不行，要用of才可以？
       for (const item of sourceArray) {
-        const text = item.substring(5)
-        try {
-          const t = { type: 'object', data: JSON.parse(text) }
-          result.push(t)
-          onMessage && onMessage(t)
-        } catch (e) {
-          if (text == '[DONE]') {
-            break
-          }
-          console.debug(e)
-          console.debug(text)
-          result.push({ type: 'string', data: text })
-        }
+        // console.log(item)
+        result.push(item)
+        onMessage && onMessage(item)
       }
     }
   } while (!r?.done)

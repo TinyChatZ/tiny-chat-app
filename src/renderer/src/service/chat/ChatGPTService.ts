@@ -15,7 +15,7 @@ export class ChatGPTService implements ChatBotInterface {
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   getRequestOptions(chatItemId?: string) {
-    const setting = useSettingStore().chatgpt
+    const setting = useSettingStore().model.chatgpt
     const chatItemStore = useChatItemStore(chatItemId)
 
     // 如果拿不到token就配置
@@ -62,20 +62,19 @@ export class ChatGPTService implements ChatBotInterface {
     refreshHook && refreshHook(true)
     // 发起EventSource调用
     try {
-      await getEventSource<{ choices: Array<{ delta: { role?: string; content?: string } }> }>(
+      await getEventSource(
         url,
         options,
         // 渲染结果
         (res) => {
-          if (typeof res.data !== 'string') {
-            if (res.data?.choices[0].delta?.role) {
-              chatItemStore.chatList[chatItemStore.getRealIndex(position)].role =
-                res.data?.choices[0].delta?.role
-            } else if (res.data?.choices[0].delta?.content) {
-              chatItemStore.chatList[chatItemStore.getRealIndex(position)].content +=
-                res.data?.choices[0].delta?.content
-              refreshHook && refreshHook(false)
-            }
+          const item = this.parseResult(res)
+          if (item?.choices[0].delta?.role) {
+            chatItemStore.chatList[chatItemStore.getRealIndex(position)].role =
+              item?.choices[0].delta?.role
+          } else if (item?.choices[0].delta?.content) {
+            chatItemStore.chatList[chatItemStore.getRealIndex(position)].content +=
+              item?.choices[0].delta?.content
+            refreshHook && refreshHook(false)
           }
         }
       )
@@ -99,13 +98,12 @@ export class ChatGPTService implements ChatBotInterface {
       content: prompt
     })
     try {
-      const res = await getEventSource<{
-        choices: Array<{ delta: { role?: string; content?: string } }>
-      }>(url, options)
+      const res = await getEventSource(url, options)
       let title = ''
-      for (const item of res.data) {
-        if (typeof item.data != 'string' && item.data?.choices[0].delta?.content) {
-          title += item.data?.choices[0].delta?.content
+      for (const data of res.data) {
+        const item = this.parseResult(data)
+        if (item?.choices[0].delta?.content) {
+          title += item?.choices[0].delta?.content
         }
       }
       if (title.length > 50) {
@@ -116,5 +114,36 @@ export class ChatGPTService implements ChatBotInterface {
     } catch {
       return ''
     }
+  }
+  parseResult(data: string): ChatGPTResult | undefined {
+    if (data === 'data: [DONE]') return
+    if (data.startsWith('data:')) data = data.substring(5)
+    try {
+      return JSON.parse(data)
+    } catch {
+      return
+    }
+  }
+}
+
+interface ChatGPTResult {
+  id: string
+  object: string
+  created: number
+  model: string
+  choices: [
+    {
+      index: number
+      delta: {
+        content: string
+        role: string
+      }
+    }
+  ]
+  finish_reason: string
+  usage: {
+    prompt_tokens: number
+    completion_tokens: number
+    total_tokens: number
   }
 }

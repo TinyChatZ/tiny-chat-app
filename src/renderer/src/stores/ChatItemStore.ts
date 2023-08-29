@@ -4,7 +4,7 @@ import { ChatItem } from '@shared/chat/ChatType'
 import { TinyResult, TinyResultBuilder } from '@shared/common/TinyResult'
 import { StatusCode } from '@shared/common/StatusCode'
 import { useChatSessionStore } from './ChatSessionStore'
-import { ChatGPTService } from '@renderer/service/chat/ChatGPTService'
+import { getService } from '@renderer/service/chat/ChatBotInterface'
 /**
  * ChatItemStoreState类型
  */
@@ -38,9 +38,9 @@ export const chatItemStoreFactory = (id?: string) =>
        */
       getLimitsData(): Array<ChatItem> {
         const settingStore = useSettingStore()
-        const calculateType = settingStore.chatgpt.options.limitsCalculate
-        const limitsBehavior = settingStore.chatgpt.options.limitsBehavior
-        const limits = settingStore.chatgpt.options.limitsLength
+        const calculateType = settingStore.model.common.options.limitsCalculate
+        const limitsBehavior = settingStore.model.common.options.limitsBehavior
+        const limits = settingStore.model.common.options.limitsLength
         let limitData = new Array<ChatItem>()
         let length = 0
         let curLength = 0
@@ -194,7 +194,7 @@ export const chatItemStoreFactory = (id?: string) =>
         // 开始发送gpt请求
         this.createUserInfo(question)
         try {
-          await ChatGPTService.INSTANCE.getChatResultStream(this.id, refreshHook)
+          await getService().getChatResultStream(this.id, refreshHook)
         } catch (e) {
           return TinyResultBuilder.buildException(StatusCode.E20002)
         } finally {
@@ -221,16 +221,16 @@ export const chatItemStoreFactory = (id?: string) =>
         }
         // 获取配置
         const settingStore = useSettingStore()
-        if (!settingStore.chatgpt.prompts.generateTitle) {
+        if (!settingStore.model.common.prompts.generateTitle) {
           window.$message.error('需配置标题生成的prompts')
           this.id && chatSessionStore.sessionModifySuccess(this.id)
           return ''
         }
         // 发起请求
         try {
-          return await ChatGPTService.INSTANCE.getChatTitle(
+          return await getService().getChatTitle(
             this.id,
-            settingStore.chatgpt.prompts.generateTitle
+            settingStore.model.common.prompts.generateTitle
           )
         } catch {
           window.$message.error('请求失败，请检查网络')

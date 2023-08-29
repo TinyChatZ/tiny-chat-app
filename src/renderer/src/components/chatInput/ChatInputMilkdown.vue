@@ -64,7 +64,7 @@ defineExpose({ editor })
   overflow: hidden;
   transition: all 0.5s;
 }
-.focusHeight:hover,
+
 .focusHeight:focus {
   height: 20vh;
   overflow: auto;

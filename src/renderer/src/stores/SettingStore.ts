@@ -24,11 +24,11 @@ const useSettingStore = defineStore('setting', {
   }),
   getters: {
     getUrl(): string {
-      return this.chatgpt?.proxy?.address || 'https://api.openai.com' + '/v1/chat/completions'
+      return this.model.chatgpt?.proxy?.address || 'https://api.openai.com' + '/v1/chat/completions'
     },
     getHeaders(): { Authorization: string } {
       return {
-        Authorization: this.chatgpt?.token || ''
+        Authorization: this.model.chatgpt?.token || ''
       }
     },
     /**
@@ -65,11 +65,11 @@ const useSettingStore = defineStore('setting', {
      */
     async getSettingParams(): Promise<RpcResult<SettingType>> {
       const res = await window.api.getSettingParams()
-      this.chatgpt = res.data.chatgpt
       this.account = res.data.account
       this.general = res.data.general
       this.shortcuts = res.data.shortcuts
       this.other = res.data.other
+      this.model = res.data.model
       return res
     },
     /** 全量更新配置信息 */
@@ -89,12 +89,12 @@ const useSettingStore = defineStore('setting', {
      */
     cloneNewSetting(): SettingType {
       return {
-        chatgpt: this.chatgpt,
         account: this.account,
         general: this.general,
         shortcuts: this.shortcuts,
         session: this.session,
-        other: this.other
+        other: this.other,
+        model: this.model
       }
     },
     getValueByStr(str: string): unknown {

@@ -22,7 +22,7 @@ import {
   NIcon
 } from 'naive-ui'
 import { ref, onMounted, watch } from 'vue'
-import { SettingType, SettingChatgptType, getDefaultSetting } from '@shared/config/SettingType'
+import { SettingType, getDefaultSetting, SettingModelType } from '@shared/config/SettingType'
 import IconMain from '@renderer/components/icons/IconMain.vue'
 import GithubButton from 'vue-github-button'
 import MainChatUserIcon from '@renderer/components/icons/MainChatUserIcon.vue'
@@ -40,7 +40,9 @@ const showProxy = ref(false)
 onMounted(async () => {
   formValue.value = settingStore.cloneNewSetting()
   showProxy.value =
-    formValue.value.chatgpt.proxy && formValue.value.chatgpt.proxy.address ? true : false
+    formValue.value.model.chatgpt.proxy && formValue.value.model.chatgpt.proxy.address
+      ? true
+      : false
   sysInfo.value = await window.api.getSysInfo()
   loading.value = false
 })
@@ -100,11 +102,12 @@ const allInOneConfigInputLoading = ref(false)
 function generateAllInOneConfig(): void {
   allInOneLoading.value = true
   try {
-    const json = JSON.stringify(settingStore.chatgpt)
-    window.electronClipboard.writeText(window.btoa(json))
+    const json = JSON.stringify(settingStore.model)
+    window.electronClipboard.writeText(window.btoa(unescape(encodeURIComponent(json))))
     message.success('生成成功已复制到剪切板')
-  } catch {
-    message.error('生成位置异常')
+  } catch (e) {
+    message.error('生成配置异常')
+    console.error(e)
   } finally {
     allInOneLoading.value = false
     allInOneButtonText.value = '✔️'
@@ -117,35 +120,9 @@ watch(allInOneConfigData, (newValue) => {
     allInOneConfigInputLoading.value = true
     setTimeout(() => {
       try {
-        const json = JSON.parse(decodeURIComponent(window.atob(newValue)))
-        const gptConfig: SettingChatgptType = getDefaultSetting().chatgpt
-        if (json.token) gptConfig.token = json.token
-
-        if (json.options && json.options.limitsLength)
-          gptConfig.options.limitsLength = json.options.limitsLength
-
-        if (json.options && json.options.limitsBehavior)
-          gptConfig.options.limitsBehavior = json.options.limitsBehavior
-
-        if (json.options && json.options.limitsCalculate)
-          gptConfig.options.limitsCalculate = json.options.limitsCalculate
-
-        if (json.proxy && json.proxy.address) gptConfig.proxy.address = json.proxy.address
-
-        if (json.proxy && json.proxy.param) gptConfig.proxy.param = json.proxy.param
-
-        if (json.proxy && json.proxy.useProxy) gptConfig.proxy.useProxy = json.proxy.useProxy
-
-        if (json.session && json.session.savePath)
-          gptConfig.session.savePath = json.session.savePath
-
-        if (json.session && json.session.savePrefix)
-          gptConfig.session.savePrefix = json.session.savePrefix
-
-        if (json.prompts && json.prompts.generateTitle)
-          gptConfig.prompts.generateTitle = json.prompts.generateTitle
-
-        formValue.value.chatgpt = gptConfig
+        const json = JSON.parse(decodeURIComponent(escape(window.atob(newValue))))
+        const config: SettingModelType = getDefaultSetting().model
+        formValue.value.model = Object.assign(config, json)
         message.success('解析成功')
       } catch (e) {
         console.error(e)
@@ -186,12 +163,20 @@ function gotoHash(id: string): void {
           :show-background="true"
           ignore-gap
           :bound="120"
-          type="block"
+          type="rail"
         >
           <n-anchor-link title="通用(General)" href="#/set#general" @click="gotoHash('#general')" />
+          <n-anchor-link title="模型(ChatBot)">
+            <n-anchor-link
+              title="模型通用"
+              href="#/set#modelCommon"
+              @click="gotoHash('#modelCommon')"
+            />
+            <n-anchor-link title="ChatGPT" href="#/set#chatgpt" @click="gotoHash('#chatgpt')" />
+            <n-anchor-link title="文心一言" href="#/set#wenxin" @click="gotoHash('#wenxin')" />
+          </n-anchor-link>
           <n-anchor-link title="会话(Session)" href="#/set#session" @click="gotoHash('#session')" />
           <n-anchor-link title="账户(Account)" href="#/set#account" @click="gotoHash('#account')" />
-          <n-anchor-link title="ChatGPT" href="#/set#chatgpt" @click="gotoHash('#chatgpt')" />
           <!-- <n-anchor-link title="快捷键" href="#shortcuts" /> -->
           <!-- <n-anchor-link title="检查更新" href="#update" /> -->
           <n-anchor-link title="关于(About)" href="#/set#about" @click="gotoHash('#about')" />
@@ -282,6 +267,115 @@ function gotoHash(id: string): void {
                 </n-form-item>
               </n-form>
             </n-card>
+            <n-card id="modelCommon">
+              <n-thing title="模型通用配置">
+                <template #header-extra>
+                  <n-button text :loading="allInOneLoading" @click="generateAllInOneConfig">
+                    {{ allInOneButtonText }}
+                  </n-button>
+                </template>
+                <n-form>
+                  <n-form-item label="All In One 配置">
+                    <n-input
+                      v-model:value="allInOneConfigData"
+                      :loading="allInOneConfigInputLoading"
+                      type="textarea"
+                      placeholder="如何有人给你提供了All In One Token，你可以直接把这段话粘贴到这里"
+                    />
+                  </n-form-item>
+                  <n-form-item label="默认模型配置">
+                    <n-radio-group v-model:value="formValue.model.common.defaultModel">
+                      <n-radio-button key="chatgpt" value="chatgpt">ChatGPT</n-radio-button>
+                      <n-radio-button key="wenxin" value="wenxin">文心一言</n-radio-button>
+                    </n-radio-group>
+                  </n-form-item>
+                  <n-form-item label="文本限制长度(500-160000)">
+                    <n-input-number
+                      v-model:value="formValue.model.common.options.limitsLength"
+                      max="160000"
+                      min="500"
+                      step="500"
+                      placeholder="限制文本长度默认为5000"
+                    />
+                  </n-form-item>
+                  <n-form-item label="文本限制策略">
+                    <n-radio-group v-model:value="formValue.model.common.options.limitsBehavior">
+                      <n-radio-button value="failSafe">忽略早期内容</n-radio-button>
+                      <n-radio-button value="failFast">提示错误</n-radio-button>
+                    </n-radio-group>
+                  </n-form-item>
+                  <n-collapse-transition
+                    :show="formValue.model.common.options.limitsBehavior === 'failSafe'"
+                  >
+                    <n-form-item label="文本限制计量">
+                      <n-radio-group v-model:value="formValue.model.common.options.limitsCalculate">
+                        <n-radio-button value="character">按字符计算</n-radio-button>
+                        <n-radio-button value="block">按问答计算</n-radio-button>
+                      </n-radio-group>
+                    </n-form-item>
+                  </n-collapse-transition>
+                  <n-form-item label="Prompt:标题生成（除非你有更好的否则请不要修改）">
+                    <n-input
+                      v-model:value="formValue.model.common.prompts.generateTitle"
+                      type="textarea"
+                    ></n-input>
+                  </n-form-item>
+                </n-form>
+              </n-thing>
+            </n-card>
+            <!-- chagpt配置卡片 -->
+            <n-card id="chatgpt">
+              <n-thing title="ChatGPT">
+                <n-form>
+                  <n-form-item label="OpenAI Token"
+                    ><n-input
+                      v-model:value="formValue.model.chatgpt.token"
+                      placeholder="这是OpenAI官网中生成的token"
+                  /></n-form-item>
+                  <n-form-item label="代理:是否使用代理模式">
+                    <n-switch v-model:value="formValue.model.chatgpt.proxy.useProxy" />
+                  </n-form-item>
+                  <n-collapse-transition :show="formValue.model.chatgpt.proxy.useProxy">
+                    <n-form-item label="代理地址"
+                      ><n-input
+                        v-model:value="formValue.model.chatgpt.proxy.address"
+                        placeholder="请输入代理地址"
+                    /></n-form-item>
+                    <n-form-item label="代理Token"
+                      ><n-input
+                        v-model:value="formValue.model.chatgpt.proxy.param"
+                        placeholder="请输入代理token"
+                    /></n-form-item>
+                  </n-collapse-transition>
+                </n-form>
+              </n-thing>
+            </n-card>
+            <!-- 文心一言配置卡片 -->
+            <n-card id="wenxin">
+              <n-thing title="文心一言">
+                <n-form>
+                  <n-form-item label="文心一言 API Key">
+                    <n-input
+                      v-model:value="formValue.model.wenxin.apiKey"
+                      placeholder="请填入创建应用的API Key"
+                    />
+                  </n-form-item>
+                  <n-form-item label="文心一言 API Secret">
+                    <n-input
+                      v-model:value="formValue.model.wenxin.apiSecret"
+                      placeholder="请填入创建应用的API Secret"
+                    />
+                  </n-form-item>
+                  <n-form-item label="文心一言 AccessToken">
+                    <n-input
+                      v-model:value="formValue.model.wenxin.accessToken"
+                      placeholder="请填入AccessToken空则自动创建"
+                    />
+                  </n-form-item>
+                </n-form>
+              </n-thing>
+            </n-card>
+            <!-- 会话卡片 -->
             <n-card id="session" title="会话（Session)">
               <n-form>
                 <n-form-item label="排序方式">
@@ -306,79 +400,6 @@ function gotoHash(id: string): void {
                 </div>
               </n-form>
             </n-card>
-
-            <!-- chagpt配置卡片 -->
-            <n-card id="chatgpt">
-              <n-thing title="ChatGPT">
-                <template #header-extra>
-                  <n-button text :loading="allInOneLoading" @click="generateAllInOneConfig">
-                    {{ allInOneButtonText }}
-                  </n-button>
-                </template>
-                <n-form>
-                  <n-form-item label="All In One 配置">
-                    <n-input
-                      v-model:value="allInOneConfigData"
-                      :loading="allInOneConfigInputLoading"
-                      type="textarea"
-                      placeholder="如何有人给你提供了All In One Token，你可以直接把这段话粘贴到这里"
-                    />
-                  </n-form-item>
-                  <n-form-item label="OpenAI Token"
-                    ><n-input
-                      v-model:value="formValue.chatgpt.token"
-                      placeholder="这是OpenAI官网中生成的token"
-                  /></n-form-item>
-                  <n-form-item label="文本限制长度(500-5000)">
-                    <n-input-number
-                      v-model:value="formValue.chatgpt.options.limitsLength"
-                      max="5000"
-                      min="500"
-                      step="500"
-                      placeholder="限制文本长度默认为5000"
-                    />
-                  </n-form-item>
-                  <n-form-item label="文本限制策略">
-                    <n-radio-group v-model:value="formValue.chatgpt.options.limitsBehavior">
-                      <n-radio-button value="failSafe">忽略早期内容</n-radio-button>
-                      <n-radio-button value="failFast">提示错误</n-radio-button>
-                    </n-radio-group>
-                  </n-form-item>
-                  <n-collapse-transition
-                    :show="formValue.chatgpt.options.limitsBehavior === 'failSafe'"
-                  >
-                    <n-form-item label="文本限制计量">
-                      <n-radio-group v-model:value="formValue.chatgpt.options.limitsCalculate">
-                        <n-radio-button value="character">按字符计算</n-radio-button>
-                        <n-radio-button value="block">按问答计算</n-radio-button>
-                      </n-radio-group>
-                    </n-form-item>
-                  </n-collapse-transition>
-                  <n-form-item label="Prompt:标题生成（除非你有更好的否则请不要修改）">
-                    <n-input
-                      v-model:value="formValue.chatgpt.prompts.generateTitle"
-                      type="textarea"
-                    ></n-input>
-                  </n-form-item>
-                  <n-form-item label="代理:是否使用代理模式">
-                    <n-switch v-model:value="formValue.chatgpt.proxy.useProxy" />
-                  </n-form-item>
-                  <n-collapse-transition :show="formValue.chatgpt.proxy.useProxy">
-                    <n-form-item label="代理地址"
-                      ><n-input
-                        v-model:value="formValue.chatgpt.proxy.address"
-                        placeholder="请输入代理地址"
-                    /></n-form-item>
-                    <n-form-item label="代理Token"
-                      ><n-input
-                        v-model:value="formValue.chatgpt.proxy.param"
-                        placeholder="请输入代理token"
-                    /></n-form-item>
-                  </n-collapse-transition>
-                </n-form>
-              </n-thing>
-            </n-card>
-
             <!-- 快捷键卡片 -->
             <n-card v-show="false" id="shortcuts" title="快捷键">
               <n-form>

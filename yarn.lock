@@ -1940,10 +1940,10 @@ electron-vite@^1.0.21:
     magic-string "^0.30.0"
     picocolors "^1.0.0"
 
-electron@^22.3.4:
-  version "22.3.4"
-  resolved "https://registry.npmmirror.com/electron/-/electron-22.3.4.tgz"
-  integrity sha512-EY/ieC3gnKYUNOQPJSCIbiMBwEnGs/j0yIAUf0pXPK4BRh2nvXTD5d9OdouAIN7bRNLLPgqoTm0uXgZPAWTVkg==
+electron@22.3.22:
+  version "22.3.22"
+  resolved "https://registry.npmmirror.com/electron/-/electron-22.3.22.tgz#82c006e25745470c535ba03723ed0a68828c41f6"
+  integrity sha512-jSZDXwQXa98QlCzZNWRxKhcJC3ZI6WpsA2Fdvwj5eOtFqhwnbvL5HiO7IzTCcUnGggaYgVcDSfbssloA3hxcvw==
   dependencies:
     "@electron/get" "^2.0.0"
     "@types/node" "^16.11.26"
