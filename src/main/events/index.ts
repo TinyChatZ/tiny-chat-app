@@ -169,7 +169,10 @@ export default function registerEvent(): void {
     })
     console.log(filePaths)
     if (canceled) return ''
-    const accountImageTargetPath = path.join(await getAssestDirPath(), 'accountImage.png')
+    const accountImageTargetPath = path.join(
+      await getAssestDirPath(),
+      `accountImage${Date.now().valueOf()}.png`
+    )
     try {
       await copyFile(filePaths[0], accountImageTargetPath)
       return accountImageTargetPath

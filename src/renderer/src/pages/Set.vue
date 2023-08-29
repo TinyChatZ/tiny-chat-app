@@ -393,7 +393,7 @@ function gotoHash(id: string): void {
             <n-card id="account" title="账户（Account）">
               <n-form>
                 <div class="flex flex-col items-center justify-center">
-                  <main-chat-user-icon :size="100" />
+                  <main-chat-user-icon style="height: 100px; width: 100px" :size="100" />
                   <div class="mt-4">
                     <n-button @click="getAccountImagePath">上传图片</n-button>
                   </div>

@@ -7,7 +7,7 @@ const props = defineProps<{
 </script>
 <template>
   <template v-if="props.role === 'user'">
-    <MainChatUserIcon :preview-disabled="true" />
+    <MainChatUserIcon class="w-6 h-6" :preview-disabled="true" />
   </template>
   <template v-if="props.role === 'assistant'">
     <svg

@@ -19,9 +19,11 @@ function loadError(): void {
   <NImage
     class="rounded-full"
     :width="props.size"
+    :height="props.size"
     :preview-disabled="props.previewDisabled ?? false"
     :src="accountImagePath"
     :on-error="loadError"
+    object-fit="cover"
   >
     <!-- 默认缺省值 -->
     <template #placeholder>
