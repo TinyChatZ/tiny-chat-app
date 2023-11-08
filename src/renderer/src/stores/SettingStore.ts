@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { type SettingType, getDefaultSetting } from '@shared/config/SettingType'
 import { useMessage } from 'naive-ui'
+import { cloneDeep } from 'loadsh'
+import { useChatSessionStore } from './ChatSessionStore'
 
 /** 一些运行时共享的状态，无需持久化 */
 export interface RuntimeSettingParams {
@@ -23,13 +25,13 @@ const useSettingStore = defineStore('setting', {
     runtime: getDefaultRunTimeSettingParam()
   }),
   getters: {
-    getUrl(): string {
-      return this.model.chatgpt?.proxy?.address || 'https://api.openai.com' + '/v1/chat/completions'
-    },
-    getHeaders(): { Authorization: string } {
-      return {
-        Authorization: this.model.chatgpt?.token || ''
-      }
+    /** 获取sessionConfig */
+    getSessionConfig(): SettingType {
+      const r = cloneDeep(this)
+      const model_common_defaultModel =
+        useChatSessionStore().curChatSession?.sessionConfig?.model?.common?.defaultModel
+      if (model_common_defaultModel) r.model.common.defaultModel = model_common_defaultModel
+      return r
     },
     /**
      * 获取当前的显示模式，如果配置为system则是经过计算的
@@ -70,6 +72,7 @@ const useSettingStore = defineStore('setting', {
       this.shortcuts = res.data.shortcuts
       this.other = res.data.other
       this.model = res.data.model
+      this.session = res.data.session
       return res
     },
     /** 全量更新配置信息 */

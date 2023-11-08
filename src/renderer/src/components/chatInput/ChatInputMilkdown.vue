@@ -4,7 +4,7 @@ import { listener, listenerCtx } from '@milkdown/plugin-listener'
 import { commonmark } from '@milkdown/preset-commonmark'
 import { $useKeymap } from '@milkdown/utils'
 import { Milkdown, useEditor } from '@milkdown/vue'
-import { trailing } from '@milkdown/plugin-trailing';
+import { trailing } from '@milkdown/plugin-trailing'
 
 const emits = defineEmits(['submit'])
 
@@ -18,7 +18,7 @@ const editor = useEditor((root) =>
         ...prev,
         attributes: {
           class:
-            'dark:bg-neutral-900 bg-neutral-50 border-solid border-2 border-neutral-200 dark:border-neutral-700 h-full focusHeight scrollbar-min'
+            'milkdown-select dark:bg-neutral-900 bg-neutral-50 border-solid border-2 border-neutral-200 dark:border-neutral-700 h-full focusHeight scrollbar-min'
         }
       }))
       ctx.set(rootCtx, root)
@@ -36,6 +36,9 @@ const editor = useEditor((root) =>
             return (): boolean => {
               try {
                 emits('submit')
+                // 手动获取元素并设置取消焦点
+                const element = document.getElementsByClassName('milkdown-select')?.[0]
+                if (element && element instanceof HTMLElement) element.blur()
               } catch {
                 return false
               }
@@ -49,7 +52,7 @@ const editor = useEditor((root) =>
 defineExpose({ editor })
 </script>
 <template>
-  <Milkdown class="milkdown-extra" />
+  <Milkdown ref="milkdown" class="milkdown-extra" />
 </template>
 <style>
 /* .milkdown {

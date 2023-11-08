@@ -32,6 +32,17 @@ export interface ChatSessionIndexType {
   updateTime: Date
 }
 
+/** 该会话下的配置信息 */
+export interface ChatSessionConfigType {
+  model?: {
+    /** 通用配置 */
+    common?: {
+      /** 创建session时默认模型 */
+      defaultModel?: 'wenxin' | 'chatgpt'
+    }
+  }
+}
+
 /**
  * ChatItemStore上下文对象
  * 保存了会话状态
@@ -39,6 +50,8 @@ export interface ChatSessionIndexType {
 export interface ChatSessionItemType extends ChatSessionIndexType {
   /** 该会话下的对话记录 */
   chatList?: Array<ChatItem>
+  /** 该会话下的配置信息 */
+  sessionConfig?: ChatSessionConfigType
 }
 
 /**

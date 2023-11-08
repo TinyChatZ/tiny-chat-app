@@ -36,7 +36,7 @@ export class ChatGPTService implements ChatBotInterface {
       method: 'POST',
       headers: headers,
       body: {
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-3.5-turbo-1106',
         stream: true,
         messages: chatItemStore.getLimitsData.map((item) => ({
           role: item.role,

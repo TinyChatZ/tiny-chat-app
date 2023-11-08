@@ -72,62 +72,64 @@ const sessionSortTypes = [
 ]
 </script>
 <template>
-  <div class="text-center flex gap-x-2">
-    <n-popover>
-      <template #trigger>
-        <n-button text @click="createNewSession">
+  <div class="w-full flex justify-between">
+    <div class="text-center flex gap-x-2">
+      <n-popover>
+        <template #trigger>
+          <n-button text @click="createNewSession">
+            <n-icon>
+              <chat-session-add-icon />
+            </n-icon>
+          </n-button>
+        </template>
+        <span>新建会话</span>
+      </n-popover>
+
+      <n-popover>
+        <template #trigger>
+          <n-button text @click="changeEditState">
+            <n-icon>
+              <chat-session-edit-icon />
+            </n-icon>
+          </n-button>
+        </template>
+        <span>修改会话</span>
+      </n-popover>
+
+      <n-popselect v-model:value="sessionSortType" :options="sessionSortTypes">
+        <n-button text>
           <n-icon>
-            <chat-session-add-icon />
+            <chat-session-sort-icon />
           </n-icon>
         </n-button>
-      </template>
-      <span>新建会话</span>
-    </n-popover>
+      </n-popselect>
+    </div>
 
-    <n-popover>
-      <template #trigger>
-        <n-button text @click="changeEditState">
-          <n-icon>
-            <chat-session-edit-icon />
-          </n-icon>
-        </n-button>
-      </template>
-      <span>修改会话</span>
-    </n-popover>
-
-    <n-popover>
-      <template #trigger>
-        <n-button text @click="openSettingsWindow">
-          <n-icon>
-            <chat-session-settings-icon />
-          </n-icon>
-        </n-button>
-      </template>
-      <span>配置</span>
-    </n-popover>
-
-    <n-popover>
-      <template #trigger>
-        <n-button text @click="showDialog">
-          <n-icon>
-            <chat-session-in-out-icon
-              :status="settingStore.runtime.showDialogState ? 'in' : 'out'"
-            />
-          </n-icon>
-        </n-button>
-      </template>
-      缩小/放大
-    </n-popover>
-
-    <n-popselect v-model:value="sessionSortType" :options="sessionSortTypes">
-      <n-button text>
-        <n-icon>
-          <chat-session-sort-icon />
-        </n-icon>
-      </n-button>
-    </n-popselect>
-
-    <n-button quaternary @click="eixtProgram">退出</n-button>
+    <div class="flex gap-x-2 text-center">
+      <n-popover>
+        <template #trigger>
+          <n-button text @click="openSettingsWindow">
+            <n-icon>
+              <chat-session-settings-icon />
+            </n-icon>
+          </n-button>
+        </template>
+        <span>配置</span>
+      </n-popover>
+      <n-popover>
+        <template #trigger>
+          <n-button text @click="showDialog">
+            <n-icon>
+              <chat-session-in-out-icon
+                :status="settingStore.runtime.showDialogState ? 'in' : 'out'"
+              />
+            </n-icon>
+          </n-button>
+        </template>
+        缩小/放大
+      </n-popover>
+      <n-button quaternary @click="eixtProgram">退出</n-button>
+    </div>
   </div>
 </template>
 <style scoped></style>

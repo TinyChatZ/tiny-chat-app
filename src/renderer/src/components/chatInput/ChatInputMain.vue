@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useChatSessionStore } from '@renderer/stores/ChatSessionStore'
 import { useChatItemStore } from '@renderer/stores/ChatItemStore'
-import { useMessage } from 'naive-ui'
-import { ref, watch } from 'vue'
+import { useMessage, NTag, NPopselect } from 'naive-ui'
+import { ref, watch, computed } from 'vue'
 import ChatInputMilkdownWapper from './ChatInputMilkdownWapper.vue'
 import { ChatInputmilkdownAction } from '@renderer/types/ChatInputMilkdownType'
 import MainChatSendIcon from '../icons/MainChatSendIcon.vue'
@@ -87,9 +87,31 @@ const refresh = (): void => {
   chatItemStore.createChatListItem('system', '重新开始是很好的……')
   loading.value = false
 }
+
+// 模型选择
+const modelEnum = ref([
+  { label: 'ChatGPT 3.5', value: 'chatgpt' },
+  { label: '文心一言', value: 'wenxin' }
+])
+const modelValue = ref('chatgpt')
+const modelShowValue = computed(() => {
+  for (const item of modelEnum.value) {
+    if (item.value === modelValue.value) return item.label
+  }
+  return 'Default'
+})
 </script>
 
 <template>
+  <!-- 工具条 -->
+  <div class="flex gap-x-4 w-full p-1 pl-3 pr-2">
+    <div class="flex gap-x-2 items-center">
+      <n-popselect v-model:value="modelValue" :options="modelEnum">
+        <n-tag :bordered="false" type="success"> {{ modelShowValue }} </n-tag>
+      </n-popselect>
+    </div>
+  </div>
+  <!-- 输入框 -->
   <div class="flex gap-x-2 w-full p-2 items-end">
     <div class="flex-auto w-full">
       <chat-input-milkdown-wapper ref="milkdown" @submit="sendData" />
@@ -99,4 +121,3 @@ const refresh = (): void => {
 </template>
 
 <style></style>
-@renderer/stores/ChatItemStore

@@ -47,6 +47,7 @@
     "@electron-toolkit/tsconfig": "^1.0.1",
     "@electron/notarize": "^1.2.3",
     "@rushstack/eslint-patch": "^1.2.0",
+    "@types/lodash": "^4.14.198",
     "@types/markdown-it": "^12.2.3",
     "@types/node": "16.18.21",
     "@vitejs/plugin-vue": "^4.1.0",
