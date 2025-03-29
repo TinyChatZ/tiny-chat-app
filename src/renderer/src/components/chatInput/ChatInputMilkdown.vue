@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Editor, rootCtx, editorViewOptionsCtx } from '@milkdown/core'
+import { Editor, rootCtx, editorViewOptionsCtx } from '@milkdown/kit/core'
 import { listener, listenerCtx } from '@milkdown/plugin-listener'
 import { commonmark } from '@milkdown/preset-commonmark'
 import { $useKeymap } from '@milkdown/utils'

@@ -18,6 +18,7 @@
       "@shared/*": [
         "src/shared/*"
       ]
-    }
+    },
+    "types": ["naive-ui/volar"]
   }
 }

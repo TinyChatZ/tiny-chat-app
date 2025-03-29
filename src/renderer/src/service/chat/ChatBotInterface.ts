@@ -16,7 +16,7 @@ export interface ChatBotInterface {
 }
 
 export function getService(): ChatBotInterface {
-  const setting = useSettingStore().model.common
+  const setting = useSettingStore().model.default
   switch (setting.defaultModel) {
     case 'chatgpt':
       return ChatGPTService.INSTANCE

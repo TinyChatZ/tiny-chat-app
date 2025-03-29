@@ -38,9 +38,9 @@ export const chatItemStoreFactory = (id?: string) =>
        */
       getLimitsData(): Array<ChatItem> {
         const settingStore = useSettingStore()
-        const calculateType = settingStore.model.common.options.limitsCalculate
-        const limitsBehavior = settingStore.model.common.options.limitsBehavior
-        const limits = settingStore.model.common.options.limitsLength
+        const calculateType = settingStore.model.default.options.limitsCalculate
+        const limitsBehavior = settingStore.model.default.options.limitsBehavior
+        const limits = settingStore.model.default.options.limitsLength
         let limitData = new Array<ChatItem>()
         let length = 0
         let curLength = 0
@@ -221,7 +221,7 @@ export const chatItemStoreFactory = (id?: string) =>
         }
         // 获取配置
         const settingStore = useSettingStore()
-        if (!settingStore.model.common.prompts.generateTitle) {
+        if (!settingStore.model.default.prompts.generateTitle) {
           window.$message.error('需配置标题生成的prompts')
           this.id && chatSessionStore.sessionModifySuccess(this.id)
           return ''
@@ -230,7 +230,7 @@ export const chatItemStoreFactory = (id?: string) =>
         try {
           return await getService().getChatTitle(
             this.id,
-            settingStore.model.common.prompts.generateTitle
+            settingStore.model.default.prompts.generateTitle
           )
         } catch {
           window.$message.error('请求失败，请检查网络')

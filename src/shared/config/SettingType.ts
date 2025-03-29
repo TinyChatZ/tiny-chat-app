@@ -13,11 +13,11 @@
 /**
  * 其余模型配置
  */
-interface SettingModelType {
+export interface SettingModelType {
   /** 通用配置 */
-  common: {
+  default: {
     /** 创建session时默认模型 */
-    defaultModel: 'wenxin' | 'chatgpt'
+    defaultModel: string
     /** ChatGPT额外选项 */
     options: {
       /** 请求对话长度限制 */
@@ -41,6 +41,37 @@ interface SettingModelType {
       generateTitle: string
     }
   }
+  /** 模型供应商配置（动态配置模型） */
+  suppliers: [
+    {
+      /**供应商id */
+      supplierId: string
+      /** 供应商显式名称 */
+      supplierName: string
+      /** 供应商访问方式 */
+      supplierApiUrl: string
+      /** 供应商访问方式（不同方式会采用不同的访问数据） */
+      supplierAccessType: 'openai' | 'wenxin' | 'others'
+      /** token访问令牌，openai默认为string，允许其他格式 */
+      token: string | null
+      /** 供应商下模型配置 */
+      model: {
+        /** 选中的模型id */
+        selectModelId: string
+        /** 供应商下模型列表 */
+        modelList: [
+          {
+            /** 模型id */
+            modelId: string
+            /** 模型名称 */
+            modelName: string
+            /** 模型标签（可以是任何String） */
+            modelTags: [string] | []
+          }
+        ]
+      }
+    }
+  ]
   /**文心一言配置 */
   wenxin: {
     /** apiKey 可选 */
@@ -67,7 +98,7 @@ interface SettingModelType {
   }
 }
 /** 通用设置 */
-interface SettingGeneralType {
+export interface SettingGeneralType {
   /** 显示模式 */
   displayMode: 'system' | 'dark' | 'light'
   /** 窗口置顶 */
@@ -98,12 +129,12 @@ interface SettingGeneralType {
 }
 
 /** 账户配置 */
-interface SettingAccountType {
+export interface SettingAccountType {
   accountImage: string | ''
 }
 
 /** 快捷键配置 */
-interface SettingShortcutsType {
+export interface SettingShortcutsType {
   send: string
   refresh: string
   minimize: string
@@ -113,7 +144,7 @@ interface SettingShortcutsType {
 }
 
 /** 会话管理配置 */
-interface SettingSessionType {
+export interface SettingSessionType {
   /** 会话原始位置 */
   sourcePath: string
   /** 会话展示排序方式 */
@@ -123,11 +154,11 @@ interface SettingSessionType {
 }
 
 /** 其他特殊配置 */
-interface SettingOtherType {
+export interface SettingOtherType {
   devMode: boolean
 }
 
-interface SettingType {
+export interface SettingType {
   /** ChatGPT配置 */
   // chatgpt: SettingChatgptType
   /** 账户配置 */
@@ -185,7 +216,7 @@ const getDefaultSetting = (): SettingType => ({
     devMode: false
   },
   model: {
-    common: {
+    default: {
       defaultModel: 'chatgpt',
       options: {
         limitsLength: 5000,
@@ -197,6 +228,25 @@ const getDefaultSetting = (): SettingType => ({
           'I need you to play a dialogue title generation role, you should distill the meaning of the dialogue as simple as possible and generate a reasonable title, the length of the title is less than 20 words,you just tell me the result without other thing,also you should use chinese answer me'
       }
     },
+    suppliers: [
+      {
+        supplierId: 'openai',
+        supplierName: 'OpenAI',
+        supplierApiUrl: '',
+        supplierAccessType: 'openai',
+        token: '',
+        model: {
+          selectModelId: 'gpt-4o',
+          modelList: [
+            {
+              modelId: 'gpt-4o',
+              modelName: 'GPT-4O',
+              modelTags: []
+            }
+          ]
+        }
+      }
+    ],
     wenxin: {
       apiKey: '',
       apiSecret: '',

@@ -36,7 +36,7 @@ export class ChatGPTService implements ChatBotInterface {
       method: 'POST',
       headers: headers,
       body: {
-        model: 'gpt-3.5-turbo-1106',
+        model: 'gpt-4o',
         stream: true,
         messages: chatItemStore.getLimitsData.map((item) => ({
           role: item.role,
@@ -119,7 +119,12 @@ export class ChatGPTService implements ChatBotInterface {
     if (data === 'data: [DONE]') return
     if (data.startsWith('data:')) data = data.substring(5)
     try {
-      return JSON.parse(data)
+      const res = JSON.parse(data)
+      if (res?.choices?.length > 0) {
+        return res
+      } else {
+        return
+      }
     } catch {
       return
     }

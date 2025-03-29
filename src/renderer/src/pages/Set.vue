@@ -28,13 +28,13 @@ import GithubButton from 'vue-github-button'
 import MainChatUserIcon from '@renderer/components/icons/MainChatUserIcon.vue'
 
 const settingStore = useSettingStore()
-const message = useMessage()
 // 表单数据
 const formValue = ref<SettingType>(settingStore.cloneNewSetting())
 // 系统信息
 const sysInfo = ref<Map<string, string>>(new Map<string, string>())
 // 加载图标
 const loading = ref(true)
+
 // 是否显示代理
 const showProxy = ref(false)
 onMounted(async () => {
@@ -74,24 +74,7 @@ async function openDevTool(type: string): Promise<void> {
   window.api.openDevTools(type)
 }
 
-// 获取系统可用字体
-const sysFontFamilies = ref(new Array<{ label: string; value: string }>())
-const sysFontFamiliesLoading = ref(false)
-onMounted(async () => {
-  if (sysFontFamilies.value.length > 0) return
-  sysFontFamiliesLoading.value = true
-  try {
-    const data = await window.api.getSysFontFamilies()
-    console.log(data)
-    const li = new Array<{ label: string; value: string }>()
-    data.forEach((item) => li.push({ label: item, value: item }))
-    sysFontFamilies.value = li
-  } catch (e) {
-    message.error('系统字体加载失败')
-  } finally {
-    sysFontFamiliesLoading.value = false
-  }
-})
+
 
 // 处理All In One配置
 const allInOneConfigData = ref('')
@@ -166,13 +149,20 @@ function gotoHash(id: string): void {
           type="rail"
         >
           <n-anchor-link title="通用(General)" href="#/set#general" @click="gotoHash('#general')" />
-          <n-anchor-link title="模型(ChatBot)">
+          <n-anchor-link
+            title="模型(ChatBot)"
+            href="#/set#modelCommon"
+            @click="gotoHash('#modelCommon')"
+          >
             <n-anchor-link
               title="模型通用"
               href="#/set#modelCommon"
               @click="gotoHash('#modelCommon')"
             />
             <n-anchor-link title="ChatGPT" href="#/set#chatgpt" @click="gotoHash('#chatgpt')" />
+            <n-anchor-link title="DeepSeek" href="#/set#deepseek" @click="gotoHash('#deepseek')" />
+            <n-anchor-link title="LM Studio" href="#/set#lmstudio" @click="gotoHash('#lmstudio')" />
+            <n-anchor-link title="Ollama" href="#/set#ollama" @click="gotoHash('#ollama')" />
             <n-anchor-link title="文心一言" href="#/set#wenxin" @click="gotoHash('#wenxin')" />
           </n-anchor-link>
           <n-anchor-link title="会话(Session)" href="#/set#session" @click="gotoHash('#session')" />
@@ -194,79 +184,7 @@ function gotoHash(id: string): void {
         <n-spin :show="loading">
           <n-card :bordered="false">
             <!-- 通用卡片 -->
-            <n-card id="general" title="通用（General)">
-              <n-form>
-                <n-form-item label="显示模式">
-                  <n-radio-group v-model:value="formValue.general.displayMode">
-                    <n-radio-button key="light" value="light">明亮</n-radio-button>
-                    <n-radio-button key="dark" value="dark">黑暗</n-radio-button>
-                    <n-radio-button key="system" value="system">跟随系统</n-radio-button>
-                  </n-radio-group>
-                </n-form-item>
-                <n-form-item label="窗口置顶"
-                  ><n-switch v-model:value="formValue.general.windowTop" />
-                </n-form-item>
-                <n-form-item label="保留窗口位置">
-                  <n-switch v-model:value="formValue.general.saveWindowPosition" />
-                </n-form-item>
-                <n-form-item label="多会话唤醒方式">
-                  <div class="flex flex-col gap-y-5">
-                    <div class="flex gap-x-2 items-center">
-                      <div>主窗口图标唤醒方式：</div>
-                      <n-radio-group v-model:value="formValue.general.sessionWakeUp.mainWindow">
-                        <n-radio-button value="click">鼠标单击</n-radio-button>
-                        <n-radio-button value="hover">鼠标hover</n-radio-button>
-                      </n-radio-group>
-                    </div>
-                    <div v-show="false" class="flex gap-x-2">
-                      <div>缩略图图标唤醒方式：</div>
-                      <n-radio-group v-model:value="formValue.general.sessionWakeUp.thumbnall">
-                        <n-radio-button value="click">鼠标单击</n-radio-button>
-                        <n-radio-button value="hover">鼠标hover</n-radio-button>
-                      </n-radio-group>
-                    </div>
-                  </div>
-                </n-form-item>
-                <n-form label="窗口大小" label-placement="left">
-                  <div class="flex gap-x-2">
-                    <n-form-item label="宽度">
-                      <n-input-number
-                        v-model:value="formValue.general.windowSize.width"
-                        placeholder="窗口长度"
-                        class="col-span-5"
-                        :show-button="false"
-                      />
-                    </n-form-item>
-                    <n-form-item label="高度" label-placement="left">
-                      <n-input-number
-                        v-model:value="formValue.general.windowSize.height"
-                        placeholder="窗口高度"
-                        class="col-span-5"
-                        :show-button="false"
-                      />
-                    </n-form-item>
-                  </div>
-                </n-form>
-                <n-form-item label="字体">
-                  <n-select
-                    v-model:value="formValue.general.fontFamily"
-                    :options="sysFontFamilies"
-                    :loading="sysFontFamiliesLoading"
-                    clearable
-                    placeholder="请设置字体"
-                  />
-                </n-form-item>
-                <n-form-item label="字体大小">
-                  <n-input-number
-                    v-model:value="formValue.general.fontSize"
-                    clearable
-                    max="128"
-                    min="0"
-                    placeholder="请选择字体大小"
-                  />
-                </n-form-item>
-              </n-form>
-            </n-card>
+
             <n-card id="modelCommon">
               <n-thing title="模型通用配置">
                 <template #header-extra>
@@ -283,15 +201,15 @@ function gotoHash(id: string): void {
                       placeholder="如何有人给你提供了All In One Token，你可以直接把这段话粘贴到这里"
                     />
                   </n-form-item>
-                  <n-form-item label="默认模型配置">
-                    <n-radio-group v-model:value="formValue.model.common.defaultModel">
+                  <n-form-item label="默认模型提供商">
+                    <n-radio-group v-model:value="formValue.model.default.defaultModel">
                       <n-radio-button key="chatgpt" value="chatgpt">ChatGPT</n-radio-button>
                       <n-radio-button key="wenxin" value="wenxin">文心一言</n-radio-button>
                     </n-radio-group>
                   </n-form-item>
                   <n-form-item label="文本限制长度(500-160000)">
                     <n-input-number
-                      v-model:value="formValue.model.common.options.limitsLength"
+                      v-model:value="formValue.model.default.options.limitsLength"
                       max="160000"
                       min="500"
                       step="500"
@@ -299,16 +217,16 @@ function gotoHash(id: string): void {
                     />
                   </n-form-item>
                   <n-form-item label="文本限制策略">
-                    <n-radio-group v-model:value="formValue.model.common.options.limitsBehavior">
+                    <n-radio-group v-model:value="formValue.model.default.options.limitsBehavior">
                       <n-radio-button value="failSafe">忽略早期内容</n-radio-button>
                       <n-radio-button value="failFast">提示错误</n-radio-button>
                     </n-radio-group>
                   </n-form-item>
                   <n-collapse-transition
-                    :show="formValue.model.common.options.limitsBehavior === 'failSafe'"
+                    :show="formValue.model.default.options.limitsBehavior === 'failSafe'"
                   >
                     <n-form-item label="文本限制计量">
-                      <n-radio-group v-model:value="formValue.model.common.options.limitsCalculate">
+                      <n-radio-group v-model:value="formValue.model.default.options.limitsCalculate">
                         <n-radio-button value="character">按字符计算</n-radio-button>
                         <n-radio-button value="block">按问答计算</n-radio-button>
                       </n-radio-group>
@@ -316,7 +234,7 @@ function gotoHash(id: string): void {
                   </n-collapse-transition>
                   <n-form-item label="Prompt:标题生成（除非你有更好的否则请不要修改）">
                     <n-input
-                      v-model:value="formValue.model.common.prompts.generateTitle"
+                      v-model:value="formValue.model.default.prompts.generateTitle"
                       type="textarea"
                     ></n-input>
                   </n-form-item>

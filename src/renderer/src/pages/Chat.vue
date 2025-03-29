@@ -4,6 +4,7 @@ import MainChat from '@renderer/components/chat/MainChat.vue'
 import { useSettingStore } from '@renderer/stores/SettingStore'
 import { TinyResultUiMessageHandler, TinyResultUtils } from '@renderer/utils/TinyResultUtils'
 import ChatTitleBar from '@renderer/components/chat/ChatTitleBar.vue'
+
 const settingStore = useSettingStore()
 
 // 设置全局默认异常处理为naive-ui
